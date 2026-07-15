@@ -1,0 +1,99 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import * as path from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { loadFleetManifest, runFleet } from "../src/fleet.js";
+import { SeoFleetError } from "../src/errors.js";
+import { GOOD_HTML, GOOD_ROBOTS_TXT, GOOD_SITEMAP_XML, makeFetchStub } from "./test-helpers.js";
+
+let dir: string;
+
+beforeEach(() => {
+  dir = mkdtempSync(path.join(tmpdir(), "seofleet-fleet-"));
+});
+
+afterEach(() => {
+  rmSync(dir, { recursive: true, force: true });
+});
+
+function writeManifest(relPath: string, obj: unknown): string {
+  const file = path.join(dir, relPath);
+  writeFileSync(file, JSON.stringify(obj), "utf-8");
+  return file;
+}
+
+describe("loadFleetManifest", () => {
+  it("throws a usage error when the manifest file is missing", () => {
+    expect(() => loadFleetManifest(path.join(dir, "nope.json"))).toThrow(SeoFleetError);
+  });
+
+  it("throws a usage error on malformed JSON", () => {
+    const file = path.join(dir, "manifest.json");
+    writeFileSync(file, "{not json", "utf-8");
+    expect(() => loadFleetManifest(file)).toThrow(/not valid JSON/);
+  });
+
+  it("throws a usage error when sites is missing or not an array", () => {
+    const file = writeManifest("manifest.json", { sites: "nope" });
+    expect(() => loadFleetManifest(file)).toThrow(/"sites" array/);
+  });
+
+  it("throws a usage error when an entry is missing name or path", () => {
+    const file = writeManifest("manifest.json", { sites: [{ name: "client-a" }] });
+    expect(() => loadFleetManifest(file)).toThrow(/missing a "path"/);
+  });
+
+  it("resolves relative paths against the manifest's own directory", () => {
+    mkdirSync(path.join(dir, "clients", "a"), { recursive: true });
+    const file = writeManifest("manifest.json", { sites: [{ name: "client-a", path: "./clients/a" }] });
+    const manifest = loadFleetManifest(file);
+    expect(manifest.sites[0]?.path).toBe(path.join(dir, "clients", "a"));
+  });
+});
+
+describe("runFleet", () => {
+  it("runs the full check suite against every site and reports per-site pass/fail", async () => {
+    const clientA = path.join(dir, "client-a");
+    const clientB = path.join(dir, "client-b");
+    mkdirSync(clientA, { recursive: true });
+    mkdirSync(clientB, { recursive: true });
+    writeFileSync(path.join(clientA, "seofleet.json"), JSON.stringify({ siteUrl: "https://good.example/" }), "utf-8");
+    writeFileSync(path.join(clientB, "seofleet.json"), JSON.stringify({ siteUrl: "https://bad.example/" }), "utf-8");
+
+    const manifestFile = writeManifest("fleet.json", {
+      sites: [
+        { name: "client-a", path: "./client-a" },
+        { name: "client-b", path: "./client-b" },
+      ],
+    });
+
+    const fetchStub = makeFetchStub({
+      "https://good.example/": { body: GOOD_HTML },
+      "https://good.example/robots.txt": { body: GOOD_ROBOTS_TXT },
+      "https://good.example/sitemap.xml": { body: GOOD_SITEMAP_XML },
+      "https://good.example/llms.txt": { status: 404, ok: false },
+      "https://bad.example/": { status: 500, ok: false },
+      "https://bad.example/robots.txt": { status: 404, ok: false },
+      "https://bad.example/sitemap.xml": { status: 404, ok: false },
+      "https://bad.example/llms.txt": { status: 404, ok: false },
+    });
+
+    const results = await runFleet(manifestFile, fetchStub);
+    expect(results).toHaveLength(2);
+    const a = results.find((r) => r.name === "client-a");
+    const b = results.find((r) => r.name === "client-b");
+    expect(a?.ok).toBe(true);
+    expect(b?.ok).toBe(false);
+  });
+
+  it("captures a per-site error (e.g. missing seofleet.json) without aborting the rest of the fleet", async () => {
+    const clientA = path.join(dir, "client-a");
+    mkdirSync(clientA, { recursive: true }); // no seofleet.json written
+    const manifestFile = writeManifest("fleet.json", { sites: [{ name: "client-a", path: "./client-a" }] });
+
+    const results = await runFleet(manifestFile, makeFetchStub({}));
+    expect(results).toHaveLength(1);
+    expect(results[0]?.ok).toBe(false);
+    expect(results[0]?.error).toMatch(/Run `seofleet init/);
+  });
+});
