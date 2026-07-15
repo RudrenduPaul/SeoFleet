@@ -1,0 +1,62 @@
+{
+  "name": "LLMScout-cli",
+  "version": "0.1.0",
+  "description": "Zero-config, cross-platform SEO and GEO (generative engine optimization) checks for local projects and multi-site agency fleets, in pure TypeScript with no Python or headless-browser dependency.",
+  "keywords": [
+    "seo",
+    "geo",
+    "cli",
+    "agent-native",
+    "claude-code",
+    "windows",
+    "cross-platform",
+    "agency",
+    "typescript",
+    "developer-tools"
+  ],
+  "homepage": "https://github.com/RudrenduPaul/LLMScout#readme",
+  "bugs": {
+    "url": "https://github.com/RudrenduPaul/LLMScout/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RudrenduPaul/LLMScout.git"
+  },
+  "license": "MIT",
+  "author": "Rudrendu Paul",
+  "type": "module",
+  "bin": {
+    "LLMScout": "dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src test --ext .ts",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@typescript-eslint/eslint-plugin": "^7.16.0",
+    "@typescript-eslint/parser": "^7.16.0",
+    "@vitest/coverage-v8": "^4.1.10",
+    "eslint": "^8.57.0",
+    "typescript": "^5.5.3",
+    "vitest": "^4.1.10"
+  },
+  "dependencies": {
+    "cheerio": "^1.2.0",
+    "commander": "^12.1.0"
+  }
+}
