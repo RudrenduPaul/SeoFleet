@@ -1,9 +1,10 @@
 # LLMScout
 
-LLMScout runs 12 technical-SEO and GEO (generative-engine-optimization) checks against your site from a single Node CLI, with zero Python and zero headless-browser dependency, so a fresh install behaves the same on macOS, Linux, and Windows.
+LLMScout runs 12 technical-SEO and GEO (generative-engine-optimization) checks against your site, with two independent, equally first-class distributions: an npm/TypeScript CLI with zero Python and zero headless-browser dependency, and a PyPI/Python CLI with zero runtime dependencies at all. Pick whichever fits your toolchain.
 
 [![CI](https://github.com/RudrenduPaul/LLMScout/actions/workflows/ci.yml/badge.svg)](https://github.com/RudrenduPaul/LLMScout/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![PyPI version](https://img.shields.io/pypi/v/LLMScout-cli.svg)](https://pypi.org/project/LLMScout-cli/)
 
 <!-- TODO: record demo -->
 
@@ -23,9 +24,19 @@ LLMScout runs 12 technical-SEO and GEO (generative-engine-optimization) checks a
 
 ## Install
 
-LLMScout is a TypeScript/Node CLI. It targets Node 18 or newer (declared in `package.json` `engines`).
+LLMScout ships as two independent, complementary distributions -- neither is deprecated in favor of the other, and both run the same 12 checks with the same PASS/WARN/FAIL verdicts.
 
-The npm package is not published yet, so the current install path is from source:
+**Python (PyPI, published):**
+
+```bash
+pip install LLMScout-cli
+LLMScout init ./my-site --site-url https://example.com
+LLMScout check ./my-site
+```
+
+Zero runtime dependencies -- HTML parsing and HTTP fetching both use only the Python standard library. See [python/README.md](./python/README.md) for the full Python-specific guide.
+
+**Node/TypeScript (npm):** the CLI targets Node 18+ (declared in `package.json` `engines`). The npm package (`LLMScout-cli`) has a completed `npm login` but is currently blocked on a transient npm-registry rate limit (HTTP 429) unrelated to code readiness -- until that clears, install from source:
 
 ```bash
 git clone https://github.com/RudrenduPaul/LLMScout.git
@@ -41,7 +52,7 @@ Then, in any project you want to check:
 LLMScout init .
 ```
 
-That scaffolds a `LLMScout.json` config and a small Claude Code skill file into the target directory. Set your site URL and run `LLMScout check .`. The two runtime dependencies are `cheerio` (HTML parsing) and `commander` (argument parsing): there is no Python interpreter, no `pip install`, and no Playwright/Chromium download anywhere in the install.
+That scaffolds a `LLMScout.json` config and a small Claude Code skill file into the target directory. Set your site URL and run `LLMScout check .`. The two runtime dependencies are `cheerio` (HTML parsing) and `commander` (argument parsing): there is no Python interpreter, no `pip install`, and no Playwright/Chromium download anywhere in the npm install.
 
 ## Features
 
@@ -309,7 +320,7 @@ It exists to replace the install flow of an existing project, [`AgriciDaniel/cla
 
 LLMScout is not a fork of claude-seo. It shares no code, has a different name, and reimplements the equivalent checks from scratch in pure TypeScript. The design choice that matters is what it does not do: because the checks run inside the Node process rather than by launching Python and a headless browser, the entire failure class behind those three bugs does not exist here. There is no interpreter to provision, no `pip install` to run, no browser binary to download, and no relative script path to resolve, so a fresh install behaves the same on every platform. The direct cost of that choice is that the content-extraction check is a static-HTML heuristic and cannot evaluate content that only appears after client-side JavaScript renders. The check documents this limitation in its own output.
 
-LLMScout is at v0.1 and is not yet published to npm.
+LLMScout is at v0.1. The Python distribution is published to PyPI as `LLMScout-cli` (`pip install LLMScout-cli`); the npm distribution has a completed `npm login` and is pending only a transient npm-registry rate limit, not a code-readiness issue -- see [Install](#install) for both paths.
 
 ## FAQ
 
@@ -332,11 +343,14 @@ Yes. `LLMScout fleet manifest.json` runs the full suite against every site liste
 Yes. Pass the global `--json` flag to any command for structured JSON, including per-check `id`, `status`, `message`, and `fix` fields, plus a summary object. Exit codes are stable: `0` clean, `1` at least one FAIL, `2` a usage/config error.
 
 **Is it on npm?**
-Not yet. Install from source for now (see [Install](#install)).
+The Python distribution is live on PyPI (`pip install LLMScout-cli`). The npm distribution has a completed `npm login` and is pending only a transient registry rate limit; install from source in the meantime (see [Install](#install)).
+
+**Is there a Python version?**
+Yes -- `pip install LLMScout-cli` installs a genuine, independent Python port (not a wrapper around the Node binary), with zero runtime dependencies. It runs the same 12 checks with the same PASS/WARN/FAIL verdicts as this npm package. See [python/README.md](./python/README.md).
 
 ## Contributing
 
-There is no `CONTRIBUTING.md` in this repo yet. In the meantime, the useful commands are:
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full guide, covering both the TypeScript and Python codebases. Useful commands for this package:
 
 ```bash
 npm install
@@ -349,7 +363,7 @@ npm run lint        # eslint src test
 
 CI (`.github/workflows/ci.yml`) runs lint, typecheck, build, coverage, and `npm audit --audit-level=high` on every push and pull request to `main`. Issues and pull requests are welcome at <https://github.com/RudrenduPaul/LLMScout/issues>.
 
-Adding a 13th check is intentionally small: implement the `Check` interface (`src/types.ts`) in a new file under `src/checks/`, then register it in `src/checks/index.ts`. Nothing else needs to change.
+Adding a 13th check is intentionally small: implement the `Check` interface (`src/types.ts`) in a new file under `src/checks/`, then register it in `src/checks/index.ts` (and the Python equivalent under `python/src/LLMScout/checks/`, per [CONTRIBUTING.md](./CONTRIBUTING.md)).
 
 ## License
 
