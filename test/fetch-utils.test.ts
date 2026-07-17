@@ -20,6 +20,23 @@ describe("assertHttpUrl", () => {
     expect(() => assertHttpUrl("file:///etc/passwd")).toThrow(SeoFleetError);
     expect(() => assertHttpUrl("ftp://example.com")).toThrow(SeoFleetError);
   });
+
+  it("rejects loopback, private, and link-local IP literals", () => {
+    expect(() => assertHttpUrl("http://127.0.0.1/")).toThrow(/loopback, private, or link-local/);
+    expect(() => assertHttpUrl("http://169.254.169.254/latest/meta-data/")).toThrow(
+      /loopback, private, or link-local/,
+    );
+    expect(() => assertHttpUrl("http://10.0.0.5/")).toThrow(/loopback, private, or link-local/);
+    expect(() => assertHttpUrl("http://172.16.0.1/")).toThrow(/loopback, private, or link-local/);
+    expect(() => assertHttpUrl("http://192.168.1.1/")).toThrow(/loopback, private, or link-local/);
+    expect(() => assertHttpUrl("http://[::1]/")).toThrow(/loopback, private, or link-local/);
+    expect(() => assertHttpUrl("http://localhost/")).toThrow(/loopback, private, or link-local/);
+  });
+
+  it("accepts public IP literals and ordinary hostnames", () => {
+    expect(assertHttpUrl("http://8.8.8.8/").hostname).toBe("8.8.8.8");
+    expect(assertHttpUrl("https://example.com").hostname).toBe("example.com");
+  });
 });
 
 describe("safeFetch", () => {
@@ -118,5 +135,34 @@ describe("safeFetch", () => {
     const result = await safeFetch("https://example.com");
     expect(result.ok).toBe(false);
     expect(result.error).toMatch(/ECONNREFUSED/);
+  });
+
+  it("refuses to follow a redirect into a loopback/private/link-local host", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(null, { status: 302, headers: { location: "http://169.254.169.254/" } })),
+    );
+    const result = await safeFetch("https://example.com/start");
+    expect(result.ok).toBe(false);
+    expect(result.error).toMatch(/loopback, private, or link-local/);
+  });
+
+  it("passes an abort signal with a timeout to fetch", async () => {
+    const fetchMock = vi.fn(async () => new Response("hello", { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await safeFetch("https://example.com");
+    const callInit = fetchMock.mock.calls[0][1];
+    expect(callInit.signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it("caps the response body instead of buffering it unbounded", async () => {
+    const oversized = "a".repeat(11 * 1024 * 1024); // over the 10 MiB cap
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(oversized, { status: 200 })),
+    );
+    const result = await safeFetch("https://example.com");
+    expect(result.ok).toBe(false);
+    expect(result.error).toMatch(/exceeded.*byte limit/);
   });
 });
