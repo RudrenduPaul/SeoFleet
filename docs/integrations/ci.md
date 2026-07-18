@@ -8,6 +8,8 @@ whichever matches your pipeline's existing toolchain.
 
 ## GitHub Actions -- Python CLI
 
+Published on PyPI as [`seofleet-cli`](https://pypi.org/project/seofleet-cli/).
+
 ```yaml
 name: SeoFleet check
 on: [pull_request]
@@ -40,6 +42,8 @@ output.
 
 ## GitHub Actions -- npm CLI
 
+Published on npm as [`seofleet-cli`](https://www.npmjs.com/package/seofleet-cli).
+
 ```yaml
 name: SeoFleet check
 on: [pull_request]
@@ -55,10 +59,6 @@ jobs:
       - run: npm install --save-dev seofleet-cli
       - run: npx seofleet check . --json > seofleet-results.json
 ```
-
-(The npm package is currently blocked on a transient npm-registry rate
-limit -- see the [project README](../../README.md) for status. Once
-published, this step works exactly as written.)
 
 ## Pre-commit hook (Python CLI)
 
