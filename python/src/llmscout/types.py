@@ -1,8 +1,8 @@
 """Ported from src/types.ts."""
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Callable, Dict, Optional
+from dataclasses import dataclass, field
+from typing import Callable, Dict, List, Optional
 
 from .fetch_utils import FetchedResource
 from .html_util import Element
@@ -44,6 +44,11 @@ class SiteResources:
     robots_txt: FetchedResource
     sitemap_xml: FetchedResource
     llms_txt: FetchedResource
+    # Extra sitemap URLs discovered via `Sitemap:` directive lines in
+    # robots.txt (e.g. WordPress/RankMath's /sitemap_index.xml), fetched
+    # alongside the conventional /sitemap.xml. Empty when robots.txt named
+    # no sitemap, or named only the conventional one.
+    additional_sitemaps: List[FetchedResource] = field(default_factory=list)
 
 
 @dataclass

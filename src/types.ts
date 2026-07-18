@@ -24,6 +24,13 @@ export interface SiteResources {
   homepage: FetchedResource;
   robotsTxt: FetchedResource;
   sitemapXml: FetchedResource;
+  /**
+   * Extra sitemap URLs discovered via `Sitemap:` directive lines in
+   * robots.txt (e.g. WordPress/RankMath's /sitemap_index.xml), fetched
+   * alongside the conventional /sitemap.xml. Empty when robots.txt named
+   * no sitemap, or named only the conventional one.
+   */
+  additionalSitemaps: FetchedResource[];
   llmsTxt: FetchedResource;
 }
 

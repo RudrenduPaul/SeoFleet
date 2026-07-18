@@ -83,6 +83,12 @@ export const GOOD_SITEMAP_XML = `<?xml version="1.0" encoding="UTF-8"?>
   <url><loc>https://acme.example/</loc></url>
 </urlset>`;
 
+export const ROBOTS_TXT_WITH_SITEMAP_DIRECTIVE = `User-agent: *
+Disallow:
+
+Sitemap: https://acme.example/sitemap_index.xml
+`;
+
 /**
  * Builds a full CheckContext for a single check test: `html: null` models
  * an unreachable homepage (every DOM-dependent check should FAIL in that
@@ -103,6 +109,7 @@ export function makeCheckContext(
         : { url: siteUrl, ok: false, status: 500, error: "unreachable" },
     robotsTxt: resourceOverrides.robotsTxt ?? { url: new URL("/robots.txt", siteUrl).toString(), ok: false, status: 404 },
     sitemapXml: resourceOverrides.sitemapXml ?? { url: new URL("/sitemap.xml", siteUrl).toString(), ok: false, status: 404 },
+    additionalSitemaps: resourceOverrides.additionalSitemaps ?? [],
     llmsTxt: resourceOverrides.llmsTxt ?? { url: new URL("/llms.txt", siteUrl).toString(), ok: false, status: 404 },
   };
   return { resources, $: html !== null ? cheerio.load(html) : null };
