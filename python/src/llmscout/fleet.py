@@ -4,13 +4,19 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from .config import load_config, select_checks
 from .errors import LLMScoutError
+from .report_file import write_report_file
 from .runner import has_failure, run_checks
 from .site_resources import FetchFn, load_site
 from .types import CheckResult
+
+# format.py imports FleetSiteResult from this module, so importing
+# format_check_results_json/text at module scope here would create a
+# circular import at load time; deferred to a local import inside
+# run_fleet() instead, by which point both modules are fully initialized.
 
 
 @dataclass
@@ -77,22 +83,61 @@ def load_fleet_manifest(manifest_file: str) -> FleetManifest:
     return FleetManifest(sites=sites)
 
 
-def run_fleet(manifest_file: str, fetch_fn: Optional[FetchFn] = None) -> List[FleetSiteResult]:
+def run_fleet(
+    manifest_file: str,
+    fetch_fn: Optional[FetchFn] = None,
+    out_dir: Optional[str] = None,
+    json_output: bool = False,
+) -> List[FleetSiteResult]:
     """
     Runs the full check suite against every site in a fleet manifest, local
     filesystem only -- each entry's `path` is read directly with
     `load_config` and its checks are run against the URL that path's own
     LLMScout.json declares. There is no SSH, no remote execution, and no
     network surface beyond the individual checks' own URL fetches.
+
+    When `out_dir` is set, also writes one auto-named report file per
+    successfully-checked site into that directory -- LLMScout's
+    agency/fleet differentiator: a caller checking many client sites at
+    once gets one file per site instead of manually shell-redirecting and
+    naming each one. The filename stem is derived from the manifest
+    entry's own `name` field, not the site's URL, since that's the
+    identifier the fleet operator chose. Sites that error before producing
+    check results (e.g. a missing LLMScout.json) are not written -- there's
+    nothing to report yet.
     """
+    # Deferred to break the fleet.py <-> format.py circular import (see the
+    # module-level comment above).
+    from .format import format_check_results_json, format_check_results_text
+
     manifest = load_fleet_manifest(manifest_file)
     results: List[FleetSiteResult] = []
+    used_stems: Dict[str, int] = {}
+
+    # Created once, up front, outside the per-site try/except below -- so a
+    # bad --out-dir (e.g. permission denied) surfaces as one clean
+    # top-level error instead of being swallowed as an identical per-site
+    # "error" on every single manifest entry.
+    if out_dir:
+        try:
+            os.makedirs(out_dir, exist_ok=True)
+        except OSError as err:
+            raise LLMScoutError(f'Could not create --out-dir "{out_dir}": {err}', 2) from err
 
     for site in manifest.sites:
         try:
             config = load_config(site.path)
             ctx = load_site(config.site_url, fetch_fn)
             check_results = run_checks(select_checks(config), ctx)
+
+            if out_dir:
+                report_content = (
+                    format_check_results_json(config.site_url, check_results)
+                    if json_output
+                    else format_check_results_text(config.site_url, check_results)
+                )
+                write_report_file(out_dir, site.name, json_output, report_content, used_stems)
+
             results.append(
                 FleetSiteResult(
                     name=site.name,
