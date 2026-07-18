@@ -1,9 +1,9 @@
 # Contributing to SeoFleet
 
 SeoFleet ships two independently maintained, equally first-class
-distributions of the same 12-check tool: an npm package (`seofleet-cli`,
+distributions of the same 21-check tool: an npm package (`seofleet-cli`,
 TypeScript, repo root) and a PyPI package (`seofleet-cli`, Python,
-`python/`). Both run the same 12 checks (7 technical-SEO, 5 GEO) and are
+`python/`). Both run the same 21 checks (12 technical-SEO, 9 GEO) and are
 expected to produce the same PASS/WARN/FAIL verdicts against the same
 target site. Please read this whole file before opening a PR -- which
 section applies depends on which codebase you're touching.

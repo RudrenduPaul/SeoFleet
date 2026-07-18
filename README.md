@@ -1,19 +1,24 @@
+<div align="center">
+
 # SeoFleet
 
-SeoFleet runs 12 technical-SEO and GEO (generative-engine-optimization) checks against your site, with two independent, equally first-class distributions: an npm/TypeScript CLI with zero Python and zero headless-browser dependency, and a PyPI/Python CLI with zero runtime dependencies at all. Pick whichever fits your toolchain.
+Runs 21 technical-SEO and GEO (generative-engine-optimization) checks against your site, in pure TypeScript or pure Python, with zero Python interpreter, zero headless browser, and zero external toolchain either way.
 
 [![CI](https://github.com/RudrenduPaul/SeoFleet/actions/workflows/ci.yml/badge.svg)](https://github.com/RudrenduPaul/SeoFleet/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/seofleet-cli.svg)](https://www.npmjs.com/package/seofleet-cli)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
-[![PyPI version](https://img.shields.io/pypi/v/seofleet-cli.svg)](https://pypi.org/project/seofleet-cli/)
+
+</div>
 
 <!-- TODO: record demo -->
 
 ## Contents
 
 - [Install](#install)
+- [Why GEO checks matter right now](#why-geo-checks-matter-right-now)
 - [Features](#features)
 - [Quickstart](#quickstart)
-- [The 12 checks](#the-12-checks)
+- [The 21 checks](#the-21-checks)
 - [CLI reference](#cli-reference)
 - [Fleet mode](#fleet-mode)
 - [Comparison](#comparison)
@@ -24,9 +29,19 @@ SeoFleet runs 12 technical-SEO and GEO (generative-engine-optimization) checks a
 
 ## Install
 
-SeoFleet ships as two independent, complementary distributions -- neither is deprecated in favor of the other, and both run the same 12 checks with the same PASS/WARN/FAIL verdicts.
+SeoFleet ships as two independent, complementary distributions. Both run the same 21 checks with the same PASS/WARN/FAIL verdicts, so pick whichever fits your toolchain.
 
-**Python (PyPI, published):**
+**Node/TypeScript (npm, published):**
+
+```bash
+npm install -g seofleet-cli
+seofleet init ./my-site --site-url https://example.com
+seofleet check ./my-site
+```
+
+The CLI targets Node 18+ (declared in `package.json` `engines`). The two runtime dependencies are `cheerio` (HTML parsing) and `commander` (argument parsing): there is no Python interpreter, no `pip install`, and no Playwright/Chromium download anywhere in the npm install.
+
+**Python (PyPI):**
 
 ```bash
 pip install seofleet-cli
@@ -36,33 +51,35 @@ seofleet check ./my-site
 
 Zero runtime dependencies -- HTML parsing and HTTP fetching both use only the Python standard library. See [python/README.md](./python/README.md) for the full Python-specific guide.
 
-**Node/TypeScript (npm):** the CLI targets Node 18+ (declared in `package.json` `engines`). The npm package (`seofleet-cli`) has a completed `npm login` but is currently blocked on a transient npm-registry rate limit (HTTP 429) unrelated to code readiness -- until that clears, install from source:
-
-```bash
-git clone https://github.com/RudrenduPaul/SeoFleet.git
-cd SeoFleet
-npm install
-npm run build
-npm link          # puts a `seofleet` binary on your PATH
-```
-
 Then, in any project you want to check:
 
 ```bash
 seofleet init .
 ```
 
-That scaffolds a `seofleet.json` config and a small Claude Code skill file into the target directory. Set your site URL and run `seofleet check .`. The two runtime dependencies are `cheerio` (HTML parsing) and `commander` (argument parsing): there is no Python interpreter, no `pip install`, and no Playwright/Chromium download anywhere in the npm install.
+That scaffolds a `seofleet.json` config and a small Claude Code skill file into the target directory. Set your site URL and run `seofleet check .`.
+
+## Why GEO checks matter right now
+
+Search traffic is genuinely shifting toward AI-mediated answers, and the shift is recent and well measured, not a hypothetical:
+
+- **Google's own AI Overviews are already cutting click-through.** Ahrefs measured position-1 CTR on AI-Overview-triggering keywords fall from 7.3% (December 2023) to 1.6% (December 2025) -- a 58% average CTR reduction across the study. ([Ahrefs, December 2025](https://ahrefs.com/blog/ai-overviews-reduce-clicks-update/)) Semrush's independent 10-million-keyword analysis found organic CTR drops 61% and paid CTR drops 68% when an AI Overview appears on the results page. ([Semrush](https://www.semrush.com/blog/semrush-ai-overviews-study/))
+- **ChatGPT itself is now a real, measurable traffic source.** Search Engine Land's analysis of 6.77 million sessions found ChatGPT accounts for 92% of all AI-assistant referral traffic, converting at 7.1% -- close to paid search's 7.8%. ([Search Engine Land](https://searchengineland.com/chatgpt-ai-referral-traffic-sessions-data-481630))
+- **AI crawlers are not one crawler anymore.** Between May 2024 and May 2025, GPTBot's share of AI-crawler traffic rose from 5% to 30%. OpenAI and Anthropic have since split their bots into training crawlers (GPTBot, ClaudeBot) and separate, independently blockable search/retrieval crawlers (OAI-SearchBot, Claude-SearchBot). ([Cloudflare Radar, "From Googlebot to GPTBot"](https://blog.cloudflare.com/from-googlebot-to-gptbot-whos-crawling-your-site-in-2025/)) SeoFleet's `ai-crawler-directives` check reports on all seven of the current major training and search bots (GPTBot, OAI-SearchBot, ClaudeBot, Claude-SearchBot, PerplexityBot, Google-Extended, Applebot-Extended) separately, since blocking a company's training bot has no effect on whether its assistant can still retrieve and cite your page live through its own search bot.
+- **Markdown-native delivery is a real, emerging practice, not a fad.** Cloudflare documents HTTP content negotiation (`Accept: text/markdown`) as a standards-based way to serve agents a lighter, cleaner representation of a page -- their own benchmark saw an 80% token reduction on one blog post. ([Cloudflare, "Markdown for Agents"](https://developers.cloudflare.com/fundamentals/reference/markdown-for-agents/)) Worth being honest about the current state: independent analysis across 300,000 domains found that in practice, no major AI crawler currently sends the `Accept: text/markdown` header to actually negotiate it yet -- they discover Markdown only via direct links. ([Dries Buytaert](https://dri.es/markdown-llms-txt-and-ai-crawlers)) SeoFleet's `markdown-negotiation` check reports on this without pretending the ecosystem is further along than it is.
+- **Not every signal in this space is settled, and SeoFleet does not pretend otherwise.** `llms.txt` is a real, community-driven convention (created September 2024, adopted by roughly 8-10% of top sites as of mid-2026, including Anthropic, Stripe, Cloudflare, and Vercel) -- but Google's own Gary Illyes has stated publicly that Google does not support it and has no plans to, comparing it to the deprecated `keywords` meta tag. ([Search Engine Journal](https://www.searchenginejournal.com/google-says-llms-txt-comparable-to-keywords-meta-tag/544804/)) SeoFleet's `llms-txt` check reports its presence as informational, never as a required pass -- the tool's job is to report what is actually configured, not to prescribe a policy the evidence doesn't yet support.
+- **Google removed FAQ rich results from Search entirely on May 7, 2026.** ([Search Engine Journal](https://www.searchenginejournal.com/google-drops-faq-rich-results-from-search/574429/)) `FAQPage` schema itself is not deprecated -- it remains valid markup other engines and AI assistants can still parse for direct-answer extraction -- so SeoFleet's `faq-schema` check still reports on it, just without implying it earns a Google SERP rich result anymore.
 
 ## Features
 
-- **12 checks across two categories.** 7 technical-SEO checks and 5 GEO checks, listed by name in [The 12 checks](#the-12-checks).
-- **Zero external toolchain.** Pure TypeScript/Node. `child_process` is never imported anywhere in the source. The checks run inside the Node process instead of shelling out to Python scripts or a headless browser. This is the entire reason the tool exists (see [below](#what-is-seofleet-and-why-does-it-exist)).
-- **Cross-platform by construction.** Because there is no `python3`-versus-`py -3` shelling and no relative-path script resolution, the same install runs identically on Windows, macOS, and Linux.
-- **Hardened fetch.** The single fetch wrapper (`src/fetch-utils.ts`) rejects any non-`http(s)` scheme on the initial URL, follows redirects manually one hop at a time, refuses to follow a redirect whose `Location` points at a non-`http(s)` scheme (for example `file://` or `ftp://`), and bounds the chain at 5 hops so a redirect loop cannot hang the process.
-- **Fleet mode.** `seofleet fleet manifest.json` runs the full suite across many local client-repo paths declared in one JSON manifest, in a single invocation. It reads the local filesystem only, with no SSH and no remote execution.
+- **21 checks across two categories.** 12 technical-SEO checks and 9 GEO checks, listed by name in [The 21 checks](#the-21-checks).
+- **Zero external toolchain, either language.** `child_process` is never imported anywhere in the TypeScript source; the Python port has zero runtime dependencies. Checks run inside the process instead of shelling out to Python scripts or a headless browser.
+- **Cross-platform by construction.** No `python3`-versus-`py -3` shelling and no relative-path script resolution, so the same install runs identically on Windows, macOS, and Linux.
+- **Hardened fetch.** The single fetch wrapper (`src/fetch-utils.ts`) rejects any non-`http(s)` scheme, blocks loopback/private/link-local hosts, follows redirects manually one hop at a time, and bounds the chain at 5 hops and the response body at 10 MiB.
+- **Fleet mode with per-site reports.** `seofleet fleet manifest.json` runs the full suite across many local client-repo paths in one invocation, and `--out-dir` writes one auto-named report file per site -- built for agencies checking many client sites at once.
 - **Structured output.** Every command accepts a global `--json` flag for machine-readable output, so an agent invoking the CLI can parse results programmatically.
-- **Well tested.** 129 tests, ~98.6% line coverage, and `npm audit` reports 0 vulnerabilities (all reproducible locally with `npm run test:coverage` and `npm audit`).
+- **A real, configurable User-Agent.** Sends a genuine browser User-Agent by default (some SSR frameworks and CDNs reject bot-style strings outright) and a `--user-agent` flag to override it.
+- **Well tested.** 247 TypeScript tests and 233 Python tests, both `npm audit` and the Python build reporting zero vulnerabilities (reproducible locally with `npm run test:coverage` and `npm audit`).
 
 ## Quickstart
 
@@ -94,14 +111,32 @@ SeoFleet check -- https://example.com
   Fix: Add a robots.txt file at your site root, even a permissive one, so crawlers and agents have explicit directives.
 
 [WARN] (technical) sitemap.xml
-  sitemap.xml was not reachable at https://example.com/sitemap.xml (HTTP 404).
-  Fix: Add a sitemap.xml at your site root to help search engines discover pages.
+  No sitemap was reachable (tried: https://example.com/sitemap.xml).
+  Fix: Add a sitemap.xml at your site root, or point to one with a Sitemap: directive in robots.txt, to help search engines discover pages.
 
 [PASS] (technical) Heading structure
   Exactly one <h1> and no skipped heading levels detected.
 
 [PASS] (technical) Image alt coverage
   No <img> tags found on the page.
+
+[WARN] (technical) Open Graph tags
+  No Open Graph tags found.
+  Fix: Add Open Graph meta tags (og:title, og:description, og:image, og:url) so shared links render rich previews on social platforms.
+
+[WARN] (technical) Twitter/X Card tags
+  No twitter:card meta tag found.
+  Fix: Add <meta name="twitter:card" content="summary_large_image"> (or another valid card type) so links render rich previews on X/Twitter.
+
+[WARN] (technical) Meta robots directives
+  No meta robots directives found; default Google Search snippet/preview limits will apply.
+  Fix: Add <meta name="robots" content="max-snippet:-1, max-image-preview:large, max-video-preview:-1"> to control search snippet appearance.
+
+[PASS] (technical) Image weight
+  No <img> tags with an http(s) src to measure.
+
+[PASS] (technical) Redirect chain
+  The homepage resolved with no redirects.
 
 [WARN] (geo) Structured data (JSON-LD)
   No JSON-LD structured data found.
@@ -113,7 +148,7 @@ SeoFleet check -- https://example.com
 
 [WARN] (geo) AI crawler directives
   robots.txt is unreachable, so AI-crawler directives could not be determined.
-  Fix: Add a reachable robots.txt if you want to state an explicit policy for AI crawlers (GPTBot, ClaudeBot, PerplexityBot, Google-Extended).
+  Fix: Add a reachable robots.txt if you want to state an explicit policy for AI crawlers (GPTBot, OAI-SearchBot, ClaudeBot, Claude-SearchBot, PerplexityBot, Google-Extended, Applebot-Extended).
 
 [WARN] (geo) FAQ schema
   No FAQPage structured data found.
@@ -122,7 +157,23 @@ SeoFleet check -- https://example.com
 [PASS] (geo) Content extraction friendliness
   Found 1 heading(s) and 1 structured text block(s); content appears reasonably extractable. (Heuristic: cannot assess semantic quality or JS-rendered content.)
 
-Summary: 4 PASS, 7 WARN, 1 FAIL (12 checks)
+[WARN] (geo) Speakable schema
+  No Speakable structured data found.
+  Fix: If this page has content suited for voice assistants, add a "speakable" SpeakableSpecification to its JSON-LD so voice search can surface it.
+
+[WARN] (geo) Organization schema
+  No Organization/Corporation/LocalBusiness/Person structured data found.
+  Fix: Add Organization (or Person) JSON-LD with a sameAs array of your official social/profile URLs to strengthen Knowledge Panel signals.
+
+[WARN] (geo) Markdown content negotiation
+  Requesting https://example.com/ with "Accept: text/markdown" returned Content-Type "text/html" instead of text/markdown.
+  Fix: Optional: serve a text/markdown representation of pages when the client sends "Accept: text/markdown" so LLM-based agents can fetch clean Markdown directly instead of parsing HTML.
+
+[WARN] (geo) Link header (RFC 8288)
+  The homepage does not send a Link response header.
+  Fix: Optional: add an RFC 8288 Link response header (e.g. <https://example.com/feed>; rel="alternate") to advertise machine-readable service-discovery endpoints to crawlers and AI agents.
+
+Summary: 6 PASS, 14 WARN, 1 FAIL (21 checks)
 ```
 
 The same run with `--json`:
@@ -135,10 +186,10 @@ seofleet --json check ./my-site
 {
   "siteUrl": "https://example.com",
   "summary": {
-    "pass": 4,
-    "warn": 7,
+    "pass": 6,
+    "warn": 14,
     "fail": 1,
-    "total": 12
+    "total": 21
   },
   "results": [
     {
@@ -154,31 +205,40 @@ seofleet --json check ./my-site
 
 `check` exits `0` when no check FAILs, `1` when at least one check FAILs (WARN alone does not fail the run), and `2` on a usage error such as a missing or misconfigured `seofleet.json`.
 
-## The 12 checks
+## The 21 checks
 
 Each check reports `PASS`, `WARN`, or `FAIL`, with a fix suggestion for anything that is not a clean PASS. A `WARN` is a missed optimization, not a broken page, and never fails the run on its own.
 
-### Technical SEO (7)
+### Technical SEO (12)
 
 | Check (`id`) | What it verifies |
 | --- | --- |
-| Title tag (`title`) | A `<title>` exists and is within 10–60 characters. |
-| Meta description (`meta-description`) | A `<meta name="description">` exists and is within 50–160 characters. |
+| Title tag (`title`) | A `<title>` exists and is within 10-60 characters. |
+| Meta description (`meta-description`) | A `<meta name="description">` exists and is within 50-160 characters. |
 | Canonical tag (`canonical`) | A `<link rel="canonical">` exists and its href is a valid URL (relative hrefs are resolved, not penalized). |
 | robots.txt (`robots-txt`) | `/robots.txt` is reachable and contains at least one `User-agent` directive. |
-| sitemap.xml (`sitemap-xml`) | `/sitemap.xml` is reachable and looks like valid sitemap XML (`<urlset>` or `<sitemapindex>`). |
+| sitemap.xml (`sitemap-xml`) | `/sitemap.xml` is reachable and valid, with a `Sitemap:` directive in robots.txt checked as a fallback location. A response that looks like a CDN challenge page (e.g. Cloudflare bot management) gets a distinct message instead of a generic "malformed sitemap" one. |
 | Heading structure (`heading-structure`) | Exactly one `<h1>`, and no skipped heading levels (for example an `<h1>` followed directly by an `<h3>`). |
 | Image alt coverage (`image-alt`) | `<img>` tags have an `alt` attribute (an intentional `alt=""` for decorative images counts as covered). |
+| Open Graph tags (`open-graph`) | `og:title`, `og:description`, `og:image`, and `og:url` meta tags are present, for rich link previews on social platforms. |
+| Twitter/X Card tags (`twitter-card`) | A valid `twitter:card` meta tag and its required companion fields are present. |
+| Meta robots directives (`robots-meta-directives`) | Advanced snippet-control directives (`max-snippet`, `max-image-preview`, `max-video-preview`) are set, and flags an outright `noindex`. |
+| Image weight (`image-weight`) | Each image's actual byte size (via a HEAD request), flagging oversized images that slow page load. |
+| Redirect chain (`redirect-chain`) | The homepage's full redirect chain, warning on long chains and failing if the chain dead-ends in an error status. |
 
-### GEO / generative engine optimization (5)
+### GEO / generative engine optimization (9)
 
 | Check (`id`) | What it verifies |
 | --- | --- |
 | Structured data (`structured-data`) | JSON-LD `<script type="application/ld+json">` blocks exist and parse as valid JSON. |
-| llms.txt (`llms-txt`) | An `/llms.txt` is present at the site root (an emerging convention; absence is informational). |
-| AI crawler directives (`ai-crawler-directives`) | Reports the robots.txt allow/disallow state for GPTBot, ClaudeBot, PerplexityBot, and Google-Extended. This is a report of what is configured, never a recommendation to allow or block. |
-| FAQ schema (`faq-schema`) | `FAQPage` JSON-LD is present (informational; only relevant to pages that actually have an FAQ). |
+| llms.txt (`llms-txt`) | An `/llms.txt` is present at the site root (an emerging, non-standardized convention -- see [Why GEO checks matter right now](#why-geo-checks-matter-right-now); absence is informational). |
+| AI crawler directives (`ai-crawler-directives`) | Reports the robots.txt allow/disallow state for GPTBot, OAI-SearchBot, ClaudeBot, Claude-SearchBot, PerplexityBot, Google-Extended, and Applebot-Extended. This is a report of what is configured, never a recommendation to allow or block. |
+| FAQ schema (`faq-schema`) | `FAQPage` JSON-LD is present (informational; only relevant to pages that actually have an FAQ -- see the note on Google's May 2026 rich-result deprecation above). |
 | Content extraction friendliness (`content-extraction`) | Heuristic: the page has heading/paragraph structure an engine can chunk, rather than one large unstructured block. It cannot see content that only appears after client-side JavaScript, by design. |
+| Speakable schema (`speakable-schema`) | A `SpeakableSpecification` is present in JSON-LD, for voice-assistant answer eligibility. |
+| Organization schema (`organization-schema`) | `Organization`/`Person` JSON-LD with a `sameAs` array of official profile URLs is present, for Knowledge Panel signals. |
+| Markdown content negotiation (`markdown-negotiation`) | Whether the site serves a `text/markdown` representation when requested via `Accept: text/markdown` content negotiation. |
+| Link header (`link-header`) | Whether the homepage response sends an RFC 8288 `Link` header for machine-readable service discovery. |
 
 You can run only one category by editing the `checks` block in `seofleet.json` (`{ "checks": { "technical": true, "geo": false } }`).
 
@@ -194,69 +254,31 @@ Zero-config, cross-platform SEO and GEO checks for local projects, with no
 Python or headless-browser dependency.
 
 Options:
-  -V, --version          output the version number
-  --json                 output structured JSON instead of human-readable text
-                         (default: false)
-  -h, --help             display help for command
+  -V, --version                  output the version number
+  --json                         output structured JSON instead of
+                                 human-readable text (default: false)
+  --user-agent <string>          override the default User-Agent header sent on
+                                 outbound fetches
+  -h, --help                     display help for command
 
 Commands:
-  init [options] <path>  Scaffold a SeoFleet setup (seofleet.json + a Claude
-                         Code skill file) into a target directory
-  check <path>           Run SEO/GEO checks against a local project's
-                         configured site
-  fleet <config.json>    Run the full check suite against every site listed in
-                         a fleet manifest
-  help [command]         display help for command
+  init [options] <path>          Scaffold a SeoFleet setup (seofleet.json + a
+                                 Claude Code skill file) into a target
+                                 directory
+  check [options] <path>         Run SEO/GEO checks against a local project's
+                                 configured site
+  fleet [options] <config.json>  Run the full check suite against every site
+                                 listed in a fleet manifest
+  help [command]                 display help for command
 ```
 
 | Command | Argument | Options | Purpose |
 | --- | --- | --- | --- |
 | `init` | `<path>` target directory | `--site-url <url>` set `siteUrl` immediately | Scaffold `seofleet.json` plus a Claude Code skill file. Idempotent: existing files are left untouched. |
-| `check` | `<path>` project directory containing `seofleet.json` | (global `--json`) | Run the selected checks against the configured `siteUrl`. |
-| `fleet` | `<config.json>` fleet manifest | (global `--json`) | Run the full suite against every site in the manifest. |
+| `check` | `<path>` project directory containing `seofleet.json` | `--out-dir <dir>` also write an auto-named report file for this site; (global `--json`, `--user-agent`) | Run the selected checks against the configured `siteUrl`. |
+| `fleet` | `<config.json>` fleet manifest | `--out-dir <dir>` also write one auto-named report file per site, named from the manifest's `name` field; (global `--json`, `--user-agent`) | Run the full suite against every site in the manifest. |
 
-`--json`, `-V`/`--version`, and `-h`/`--help` are the only global options.
-
-```
-$ seofleet init --help
-Usage: seofleet init [options] <path>
-
-Scaffold a SeoFleet setup (seofleet.json + a Claude Code skill file) into a
-target directory
-
-Arguments:
-  path              target project directory
-
-Options:
-  --site-url <url>  set siteUrl in the scaffolded config immediately
-  -h, --help        display help for command
-```
-
-```
-$ seofleet check --help
-Usage: seofleet check [options] <path>
-
-Run SEO/GEO checks against a local project's configured site
-
-Arguments:
-  path        local project directory containing seofleet.json
-
-Options:
-  -h, --help  display help for command
-```
-
-```
-$ seofleet fleet --help
-Usage: seofleet fleet [options] <config.json>
-
-Run the full check suite against every site listed in a fleet manifest
-
-Arguments:
-  config.json  fleet manifest file: { "sites": [{ "name", "path" }] }
-
-Options:
-  -h, --help   display help for command
-```
+`--json`, `--user-agent`, `-V`/`--version`, and `-h`/`--help` are the only global options.
 
 ### Exit codes
 
@@ -286,67 +308,74 @@ seofleet fleet ./fleet.json
 ```
 SeoFleet fleet report
 
-[FAIL] client-a (/abs/path/clients/client-a) -- 4 PASS, 7 WARN, 1 FAIL
-[PASS] client-b (/abs/path/clients/client-b) -- 10 PASS, 2 WARN, 0 FAIL
+[FAIL] client-a (/abs/path/clients/client-a) -- 6 PASS, 14 WARN, 1 FAIL
+[PASS] client-b (/abs/path/clients/client-b) -- 8 PASS, 13 WARN, 0 FAIL
 
 Fleet summary: 1 site(s) passed, 1 site(s) failed, 0 site(s) errored (2 total).
 ```
 
-Each entry's `path` points at a directory that has its own `seofleet.json`. Relative paths resolve against the manifest file's own directory (not the process working directory), so the same manifest works no matter where you invoke it from. Everything is local filesystem access, with no SSH and no remote-execution surface.
+Add `--out-dir ./reports` and each site's result is also written to its own auto-named file (`client-a.txt`, `client-b.txt`, or `.json` with `--json`) -- instead of one combined stdout dump, an agency running this across many client sites gets one distinguishable report per client. Each manifest entry's `path` resolves against the manifest file's own directory, not the process working directory, so the same manifest works no matter where you invoke it from. Everything is local filesystem access, with no SSH and no remote-execution surface.
 
 ## Comparison
 
 Every cell below is drawn from a verifiable source (a repo file, a package manifest, or an open issue), cited under the table. "Checker" means the tool audits an existing live site; "generator" means it emits SEO/GEO asset files for you to publish.
 
-| | SeoFleet | claude-seo (AgriciDaniel) | geo-optimizer-skill (Auriti-Labs) | @glincker/geo-seo |
+| | SeoFleet | claude-seo (AgriciDaniel) | geo-seo-claude (zubair-trabzada) | geo-optimizer-skill (Auriti-Labs) |
 | --- | --- | --- | --- | --- |
-| Requires Python | No | Yes (Python 3.10+) | Yes (Python 3.9+) | No |
-| Requires Playwright / headless browser | No | Optional (Chromium auto-installed by `install.sh` for SPA rendering) | Not required for core function | No |
-| Install | npm / from source (deps: `cheerio`, `commander`) | `git clone` + `install.sh` / `install.ps1`, or Claude Code `/plugin` | `pip install` or `uvx` | `npm install -g` / `npx` (dep: `chalk`) |
-| Cross-platform / Windows out of the box | Yes (no shelling, no path resolution) | Ships a Windows `install.ps1`, but fresh-install/Windows/path failures are open: issues #137, #138, #139 | pip/uv are cross-platform; not verified further | Yes (npm-only) |
-| Role | Checker | Checker | Checker | Generator |
-| Coverage | Technical + GEO | Technical + GEO (broad) | Technical + GEO | GEO + technical asset generation |
-| License | MIT | MIT | MIT | MIT |
+| Requires Python | No | Yes (Python 3.10+) | Yes | Yes (Python 3.9+) |
+| Requires Playwright / headless browser | No | Optional (Chromium auto-installed by `install.sh` for SPA rendering) | Optional, for some checks | Not required for core function |
+| Install | npm / PyPI (deps: `cheerio`+`commander` or none) | `git clone` + `install.sh` / `install.ps1`, or Claude Code `/plugin` | `git clone` + `install.sh` / `install-win.sh` | `pip install` or `uvx` |
+| Cross-platform / Windows out of the box | Yes (no shelling, no path resolution) | Ships a Windows `install.ps1`, but fresh-install/Windows/path failures are a recurring pattern: issues [#137](https://github.com/AgriciDaniel/claude-seo/issues/137), [#138](https://github.com/AgriciDaniel/claude-seo/issues/138), [#139](https://github.com/AgriciDaniel/claude-seo/issues/139) | Windows install pain is a recurring pattern here too: issues [#69](https://github.com/zubair-trabzada/geo-seo-claude/issues/69), [#21](https://github.com/zubair-trabzada/geo-seo-claude/issues/21), [#3](https://github.com/zubair-trabzada/geo-seo-claude/pull/3) | pip/uv are cross-platform; not verified further |
+| AI-crawler bot coverage | 7 bots, training and search crawlers tracked separately (GPTBot/OAI-SearchBot, ClaudeBot/Claude-SearchBot, PerplexityBot, Google-Extended, Applebot-Extended) | Not a dedicated check | Not a dedicated check | Not verified |
+| Markdown content negotiation check | Yes (`markdown-negotiation`) | No | No | No |
+| Role | Checker | Checker | Checker + report generator | Checker |
+| Coverage | Technical + GEO (21 checks) | Technical + GEO (broad) | GEO-focused | Technical + GEO |
+| License | MIT | MIT | Not verified | MIT |
 
-Sources: SeoFleet, from this repo's `package.json`, `src/fetch-utils.ts`, and the absence of `child_process` in `src/`. claude-seo, from its README install section (Python 3.10+, `install.sh`/`install.ps1`, `/plugin`), its MIT license, and open issues [#137](https://github.com/AgriciDaniel/claude-seo/issues/137) (plugin install does not provision Python deps or Playwright), [#138](https://github.com/AgriciDaniel/claude-seo/issues/138) (skill instructions hardcode `python3`, fail on Windows), and [#139](https://github.com/AgriciDaniel/claude-seo/issues/139) (skills invoke `scripts/*.py` via a relative path that does not resolve in plugin installs), all open as of this writing. geo-optimizer-skill, from its README (Python 3.9+, `pip install geo-optimizer-skill` / `uvx`, MIT, CLI with audit/fix commands). @glincker/geo-seo, from its npm registry manifest (v0.4.0, `bin: geo-seo`, single `chalk` dependency, MIT, description "Framework-agnostic GEO asset generator: llms.txt, JSON-LD, robots.txt, and sitemap").
+Sources: SeoFleet, from this repo's `package.json`, `src/fetch-utils.ts`, `src/checks/index.ts`, and the absence of `child_process` in `src/`. claude-seo, from its README install section (Python 3.10+, `install.sh`/`install.ps1`, `/plugin`), its MIT license, and open issues #137/#138/#139. geo-seo-claude, from its README and its own issue tracker (Windows install pain issues #69, #21, #3, all cited above). geo-optimizer-skill, from its README (Python 3.9+, `pip install geo-optimizer-skill` / `uvx`, MIT, CLI with audit/fix commands).
 
 Hosted analytics products such as Profound, Peec, and Evertune are a different category (paid, hosted GEO-tracking dashboards, not installable OSS checkers) and are intentionally not in this table.
 
 ## What is SeoFleet, and why does it exist
 
-SeoFleet is an independent, open-source command-line tool that checks a website for 12 common technical-SEO and generative-engine-optimization issues. It is written entirely in TypeScript and runs on Node.js. It has two runtime dependencies, `cheerio` and `commander`, and it never invokes an external interpreter or browser: `child_process` does not appear anywhere in its source.
+SeoFleet is an independent, open-source command-line tool that checks a website for 21 technical-SEO and generative-engine-optimization issues. It ships as two genuinely independent, feature-equivalent distributions: a TypeScript/Node CLI with two runtime dependencies (`cheerio`, `commander`) and zero external interpreter or browser, and a Python CLI with zero runtime dependencies at all. Neither `child_process` (TypeScript) nor a subprocess call (Python) appears anywhere in either implementation's checks.
 
-It exists to replace the install flow of an existing project, [`AgriciDaniel/claude-seo`](https://github.com/AgriciDaniel/claude-seo), for one specific class of problem. That project is a Claude Code SEO/GEO skill that carries out its checks by shelling out to Python scripts (Playwright-based rendering, `pip`-installed dependencies) from skill instructions. That external-toolchain-plus-path-resolution chain is the root cause behind three still-open bugs filed against it: [#137](https://github.com/AgriciDaniel/claude-seo/issues/137) (a fresh `/plugin` install provisions neither the Python dependencies nor Playwright Chromium, so it is non-functional until manual setup), [#138](https://github.com/AgriciDaniel/claude-seo/issues/138) (skill instructions hardcode `python3`, which does not exist on a stock Windows install where the launcher is `py -3` or `python`), and [#139](https://github.com/AgriciDaniel/claude-seo/issues/139) (skills call `scripts/*.py` through a relative path that does not resolve when the scripts live under the plugin root).
+It exists to replace the install flow of an existing project, [`AgriciDaniel/claude-seo`](https://github.com/AgriciDaniel/claude-seo), for one specific class of problem. That project is a Claude Code SEO/GEO skill that carries out its checks by shelling out to Python scripts (Playwright-based rendering, `pip`-installed dependencies) from skill instructions. That external-toolchain-plus-path-resolution chain is the root cause behind a recurring pattern of install/Windows/path bugs filed against it, including three still-open issues: [#137](https://github.com/AgriciDaniel/claude-seo/issues/137) (a fresh `/plugin` install provisions neither the Python dependencies nor Playwright Chromium), [#138](https://github.com/AgriciDaniel/claude-seo/issues/138) (skill instructions hardcode `python3`, which does not exist on a stock Windows install), and [#139](https://github.com/AgriciDaniel/claude-seo/issues/139) (skills call `scripts/*.py` through a relative path that does not resolve when the scripts live under the plugin root). The same class of pain shows up independently in `zubair-trabzada/geo-seo-claude`, another actively used Claude Code GEO skill (issues [#69](https://github.com/zubair-trabzada/geo-seo-claude/issues/69), [#21](https://github.com/zubair-trabzada/geo-seo-claude/issues/21), [#3](https://github.com/zubair-trabzada/geo-seo-claude/pull/3)) -- the failure mode is architectural, not specific to one project.
 
-SeoFleet is not a fork of claude-seo. It shares no code, has a different name, and reimplements the equivalent checks from scratch in pure TypeScript. The design choice that matters is what it does not do: because the checks run inside the Node process rather than by launching Python and a headless browser, the entire failure class behind those three bugs does not exist here. There is no interpreter to provision, no `pip install` to run, no browser binary to download, and no relative script path to resolve, so a fresh install behaves the same on every platform. The direct cost of that choice is that the content-extraction check is a static-HTML heuristic and cannot evaluate content that only appears after client-side JavaScript renders. The check documents this limitation in its own output.
+SeoFleet is not a fork of either project. It shares no code with them, has a different name, and reimplements the equivalent checks from scratch. The design choice that matters is what it does not do: because the checks run inside the host process rather than by launching an external interpreter and a headless browser, the entire failure class behind those bugs does not exist here. There is no interpreter to provision, no `pip install` to run beyond the package itself, no browser binary to download, and no relative script path to resolve, so a fresh install behaves the same on every platform. The direct cost of that choice is that the content-extraction check is a static-HTML heuristic and cannot evaluate content that only appears after client-side JavaScript renders. The check documents this limitation in its own output.
 
-SeoFleet is at v0.1. The Python distribution is published to PyPI as `seofleet-cli` (`pip install seofleet-cli`); the npm distribution has a completed `npm login` and is pending only a transient npm-registry rate limit, not a code-readiness issue -- see [Install](#install) for both paths.
+Beyond the install-fix wedge, SeoFleet's checks track the concrete, evidence-backed direction the GEO space has actually moved since mid-2025 -- see [Why GEO checks matter right now](#why-geo-checks-matter-right-now) for the cited sources behind that claim, including the training-versus-search AI crawler split, Markdown content negotiation, and Google's own documented FAQ-rich-result deprecation.
+
+SeoFleet is at v0.2. Both distributions are published: `pip install seofleet-cli` (PyPI) and `npm install -g seofleet-cli` (npm) -- see [Install](#install) for both paths.
 
 ## FAQ
 
 **Does SeoFleet require Python?**
-No. It is pure TypeScript/Node with two npm dependencies (`cheerio`, `commander`). There is no `pip install` step and no Python interpreter involved at any point.
+No. The npm distribution is pure TypeScript/Node with two dependencies (`cheerio`, `commander`). There is no `pip install` step and no Python interpreter involved at any point in that path.
 
 **Does it use Playwright or a headless browser?**
-No. It fetches HTML over `http(s)` and parses it with `cheerio`. There is no Chromium download and no `child_process` usage anywhere in the source. The trade-off is that the content-extraction check reads static HTML only and cannot see JavaScript-rendered content. It says so in its own result message.
+No, in either distribution. Both fetch HTML over `http(s)` and parse it (`cheerio` in TypeScript, the standard library in Python). There is no Chromium download and no subprocess call anywhere in either implementation's checks. The trade-off is that the content-extraction check reads static HTML only and cannot see JavaScript-rendered content. It says so in its own result message.
 
 **What does "zero-config" mean here, concretely?**
-`seofleet init <path>` writes a working `seofleet.json` and a Claude Code skill file with no prompts. The one value you must supply is your live site URL (via `--site-url` or by editing the file), because the tool cannot infer a project's public URL from its local files. After that, `seofleet check <path>` runs with no further configuration; all 12 checks run by default.
+`seofleet init <path>` writes a working `seofleet.json` and a Claude Code skill file with no prompts. The one value you must supply is your live site URL (via `--site-url` or by editing the file), because the tool cannot infer a project's public URL from its local files. After that, `seofleet check <path>` runs with no further configuration; all 21 checks run by default.
 
-**Why not just fix claude-seo directly instead of building a separate tool?**
-The three open issues share a single root cause: checks are performed by shelling out to an external Python-plus-Playwright toolchain from skill instructions. Patching each symptom (provision the deps, detect the Windows launcher, resolve the script path) leaves that architecture in place. SeoFleet removes the architecture instead: with no external toolchain, that class of install and path failure cannot recur. It is an independent reimplementation, not a patch.
+**Why does SeoFleet track training crawlers and search crawlers separately?**
+Because OpenAI and Anthropic actually run them as separate, independently blockable user agents now. Blocking GPTBot (training) has no effect on whether OAI-SearchBot can still retrieve and cite your page live in a ChatGPT answer, and the same split applies to ClaudeBot versus Claude-SearchBot. Reporting them together would hide a real, actionable distinction.
+
+**Does SeoFleet tell me to add an llms.txt?**
+No, it only reports whether one exists. `llms.txt` is a real, growing convention, but Google has stated publicly it does not support it -- see [Why GEO checks matter right now](#why-geo-checks-matter-right-now) for the source. SeoFleet reports facts a site owner can act on; it does not take a position on an unsettled question.
+
+**Why not just fix claude-seo or geo-seo-claude directly instead of building a separate tool?**
+Their install/Windows bugs share a single root cause: checks are performed by shelling out to an external interpreter-plus-browser toolchain from skill instructions. Patching each symptom leaves that architecture in place. SeoFleet removes the architecture instead: with no external toolchain, that class of install and path failure cannot recur. It is an independent reimplementation, not a patch.
 
 **Can I run it against many sites at once?**
-Yes. `seofleet fleet manifest.json` runs the full suite against every site listed in a local JSON manifest in one invocation. It reads the local filesystem only, with no SSH or remote-execution surface.
+Yes. `seofleet fleet manifest.json` runs the full suite against every site in a local JSON manifest in one invocation, and `--out-dir` writes one auto-named report file per site instead of one combined stdout dump -- built for agencies checking many client sites.
 
 **Can an agent or script consume the output?**
 Yes. Pass the global `--json` flag to any command for structured JSON, including per-check `id`, `status`, `message`, and `fix` fields, plus a summary object. Exit codes are stable: `0` clean, `1` at least one FAIL, `2` a usage/config error.
 
-**Is it on npm?**
-The Python distribution is live on PyPI (`pip install seofleet-cli`). The npm distribution has a completed `npm login` and is pending only a transient registry rate limit; install from source in the meantime (see [Install](#install)).
-
 **Is there a Python version?**
-Yes -- `pip install seofleet-cli` installs a genuine, independent Python port (not a wrapper around the Node binary), with zero runtime dependencies. It runs the same 12 checks with the same PASS/WARN/FAIL verdicts as this npm package. See [python/README.md](./python/README.md).
+Yes -- `pip install seofleet-cli` installs a genuine, independent Python port (not a wrapper around the Node binary), with zero runtime dependencies. It runs the same 21 checks with the same PASS/WARN/FAIL verdicts as this npm package. See [python/README.md](./python/README.md).
 
 ## Contributing
 
@@ -356,14 +385,14 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full guide, covering both the T
 npm install
 npm run build       # tsc build to dist/
 npm run typecheck   # tsc --noEmit
-npm test            # vitest run (129 tests)
+npm test            # vitest run (247 tests)
 npm run test:coverage
 npm run lint        # eslint src test
 ```
 
 CI (`.github/workflows/ci.yml`) runs lint, typecheck, build, coverage, and `npm audit --audit-level=high` on every push and pull request to `main`. Issues and pull requests are welcome at <https://github.com/RudrenduPaul/SeoFleet/issues>.
 
-Adding a 13th check is intentionally small: implement the `Check` interface (`src/types.ts`) in a new file under `src/checks/`, then register it in `src/checks/index.ts` (and the Python equivalent under `python/src/seofleet/checks/`, per [CONTRIBUTING.md](./CONTRIBUTING.md)).
+Adding a 22nd check is intentionally small: implement the `Check` interface (`src/types.ts`) in a new file under `src/checks/`, then register it in `src/checks/index.ts` (and the Python equivalent under `python/src/seofleet/checks/`, per [CONTRIBUTING.md](./CONTRIBUTING.md)).
 
 ## License
 

@@ -14,7 +14,7 @@ from typing import List
 
 from .cli_lib import run_check_command, run_fleet_command, run_init_command
 
-_VERSION = "0.1.0"
+_VERSION = "0.2.0"
 
 
 def build_parser() -> argparse.ArgumentParser:

@@ -1,6 +1,6 @@
 {
   "name": "seofleet-cli",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Zero-config, cross-platform SEO and GEO (generative engine optimization) checks for local projects and multi-site agency fleets, in pure TypeScript with no Python or headless-browser dependency.",
   "keywords": [
     "seo",
