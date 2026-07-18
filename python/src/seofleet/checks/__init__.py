@@ -7,7 +7,9 @@ from ..types import Check
 from .geo.ai_crawler_directives import ai_crawler_directives_check
 from .geo.content_extraction import content_extraction_check
 from .geo.faq_schema import faq_schema_check
+from .geo.link_header import link_header_check
 from .geo.llms_txt import llms_txt_check
+from .geo.markdown_negotiation import markdown_negotiation_check
 from .geo.organization_schema import organization_schema_check
 from .geo.speakable_schema import speakable_schema_check
 from .geo.structured_data import structured_data_check
@@ -47,6 +49,8 @@ GEO_CHECKS: List[Check] = [
     content_extraction_check,
     speakable_schema_check,
     organization_schema_check,
+    markdown_negotiation_check,
+    link_header_check,
 ]
 
 ALL_CHECKS: List[Check] = [*TECHNICAL_CHECKS, *GEO_CHECKS]
@@ -74,4 +78,6 @@ __all__ = [
     "content_extraction_check",
     "speakable_schema_check",
     "organization_schema_check",
+    "markdown_negotiation_check",
+    "link_header_check",
 ]

@@ -58,7 +58,7 @@ def test_run_check_command_json_output_is_valid_json(tmp_path):
     stub = make_fetch_stub({"https://acme.example/": {"body": GOOD_HTML, "status": 200}})
     output = run_check_command(str(tmp_path), json_output=True, fetch_fn=stub)
     payload = json.loads(output.stdout)
-    assert payload["summary"]["total"] == 19
+    assert payload["summary"]["total"] == 21
 
 
 def test_run_check_command_sends_user_agent_override_when_no_fetch_fn_stub(tmp_path, monkeypatch):
@@ -80,7 +80,7 @@ def test_run_check_command_prefers_explicit_fetch_fn_over_user_agent_override(tm
     (tmp_path / "seofleet.json").write_text(json.dumps({"siteUrl": "https://acme.example/"}))
     stub = make_fetch_stub({"https://acme.example/": {"body": GOOD_HTML, "status": 200}})
     output = run_check_command(str(tmp_path), json_output=True, fetch_fn=stub, user_agent="MyCustomBot/1.0")
-    assert json.loads(output.stdout)["summary"]["total"] == 19
+    assert json.loads(output.stdout)["summary"]["total"] == 21
 
 
 def test_run_fleet_command_reports_site_errors(tmp_path):

@@ -14,6 +14,23 @@ export interface FetchedResource {
   /** The response's Content-Length header, in bytes, when present and a valid non-negative integer. */
   contentLength?: number;
   /**
+   * The response's raw Content-Type header (e.g. "text/html; charset=utf-8"),
+   * when present. Exposed so a check that negotiates on content (e.g.
+   * markdown-negotiation.ts, which sends `Accept: text/markdown` and needs
+   * to see what representation actually came back) doesn't need its own
+   * fetch layer -- the same additive shape as contentLength.
+   */
+  contentType?: string;
+  /**
+   * The response's raw Link header (RFC 8288), when present, e.g.
+   * `<https://example.com/feed>; rel="alternate"`. Exposed verbatim,
+   * unparsed -- link-header.ts owns interpreting it. This is additive to
+   * the header inspection safeFetch already does for redirect handling
+   * (`response.headers.get("location")`), just surfaced on the result
+   * instead of being consumed and discarded.
+   */
+  linkHeader?: string;
+  /**
    * Every redirect hop safeFetch followed to reach the final `url`/`status`
    * above, in the order visited -- e.g. a chain of two 301s before landing
    * on the final page produces two entries here. Absent (undefined) when
@@ -253,6 +270,8 @@ export async function safeFetch(rawUrl: string, init?: RequestInit): Promise<Fet
     }
 
     const contentLength = parseContentLength(response.headers.get("content-length"));
+    const contentType = response.headers.get("content-type") ?? undefined;
+    const linkHeader = response.headers.get("link") ?? undefined;
     let body: string;
     try {
       body = await readBodyCapped(response, MAX_BODY_BYTES);
@@ -271,6 +290,8 @@ export async function safeFetch(rawUrl: string, init?: RequestInit): Promise<Fet
       status: response.status,
       body,
       ...(contentLength !== undefined ? { contentLength } : {}),
+      ...(contentType !== undefined ? { contentType } : {}),
+      ...(linkHeader !== undefined ? { linkHeader } : {}),
       ...hopsField(),
     };
   }

@@ -37,7 +37,7 @@ def test_init_then_check_end_to_end(tmp_path):
     check_result = run_check_command(str(project), json_output=True, fetch_fn=fetch_stub)
     assert check_result.exit_code == 0
     parsed = json.loads(check_result.stdout)
-    assert len(parsed["results"]) == 19
+    assert len(parsed["results"]) == 21
     assert parsed["summary"]["fail"] == 0
 
 
