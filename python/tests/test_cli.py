@@ -1,12 +1,32 @@
 """Ported from test/cli.test.ts and test/cli-lib.test.ts."""
 from __future__ import annotations
 
+import io
 import json
 
+from LLMScout import fetch_utils
 from LLMScout.cli import run_cli
 from LLMScout.cli_lib import run_check_command, run_fleet_command, run_init_command
 
 from .conftest import GOOD_HTML, make_fetch_stub
+
+
+class _FakeHttpResponse:
+    """Minimal stand-in for the object `_opener.open(...)` returns -- see
+    test_fetch_utils.py for the same helper."""
+
+    def __init__(self, body: bytes = b"", status: int = 200) -> None:
+        self.status = status
+        self._buf = io.BytesIO(body)
+
+    def read(self, size: int = -1) -> bytes:
+        return self._buf.read(size)
+
+    def __enter__(self) -> "_FakeHttpResponse":
+        return self
+
+    def __exit__(self, *exc_info: object) -> bool:
+        return False
 
 
 def test_run_init_command_creates_scaffold(tmp_path):
@@ -37,6 +57,28 @@ def test_run_check_command_json_output_is_valid_json(tmp_path):
     assert payload["summary"]["total"] == 12
 
 
+def test_run_check_command_sends_user_agent_override_when_no_fetch_fn_stub(tmp_path, monkeypatch):
+    (tmp_path / "LLMScout.json").write_text(json.dumps({"siteUrl": "https://good.example/"}))
+    seen_user_agents = []
+
+    def _fake_open(request, timeout=None):
+        seen_user_agents.append(request.headers.get("User-agent"))
+        return _FakeHttpResponse()
+
+    monkeypatch.setattr(fetch_utils._opener, "open", _fake_open)
+    run_check_command(str(tmp_path), json_output=True, user_agent="MyCustomBot/1.0")
+
+    assert len(seen_user_agents) > 0
+    assert all(ua == "MyCustomBot/1.0" for ua in seen_user_agents)
+
+
+def test_run_check_command_prefers_explicit_fetch_fn_over_user_agent_override(tmp_path):
+    (tmp_path / "LLMScout.json").write_text(json.dumps({"siteUrl": "https://acme.example/"}))
+    stub = make_fetch_stub({"https://acme.example/": {"body": GOOD_HTML, "status": 200}})
+    output = run_check_command(str(tmp_path), json_output=True, fetch_fn=stub, user_agent="MyCustomBot/1.0")
+    assert json.loads(output.stdout)["summary"]["total"] == 12
+
+
 def test_run_fleet_command_reports_site_errors(tmp_path):
     manifest = tmp_path / "fleet.json"
     manifest.write_text(json.dumps({"sites": [{"name": "missing", "path": "./nope"}]}))
@@ -49,6 +91,13 @@ def test_run_cli_no_command_prints_help_and_exits_zero(capsys):
     assert exit_code == 0
     captured = capsys.readouterr()
     assert "usage: LLMScout" in captured.out
+
+
+def test_run_cli_help_lists_user_agent_option(capsys):
+    exit_code = run_cli(["LLMScout"])
+    assert exit_code == 0
+    captured = capsys.readouterr()
+    assert "--user-agent" in captured.out
 
 
 def test_run_cli_version_flag_exits_cleanly():

@@ -35,6 +35,12 @@ describe("CLI", () => {
     expect(stdout).toMatch(/fleet/);
   });
 
+  it("lists --user-agent as a global option in help", () => {
+    const { stdout, status } = runCli(["--help"]);
+    expect(status).toBe(0);
+    expect(stdout).toMatch(/--user-agent <string>/);
+  });
+
   it("prints the version", () => {
     const { stdout, status } = runCli(["--version"]);
     expect(status).toBe(0);

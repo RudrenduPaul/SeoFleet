@@ -7,6 +7,7 @@ from typing import Optional
 
 from .config import load_config, select_checks
 from .errors import LLMScoutError
+from .fetch_utils import with_user_agent
 from .fleet import run_fleet
 from .format import (
     format_check_results_json,
@@ -39,6 +40,16 @@ def _require_directory(target_path: str) -> None:
         raise LLMScoutError(f'"{target_path}" is not a directory.', 2)
 
 
+def _resolve_fetch_fn(user_agent: Optional[str], fetch_fn: Optional[FetchFn]) -> Optional[FetchFn]:
+    """An explicitly-passed `fetch_fn` (tests' fetch stubs) always wins.
+    Failing that, a `--user-agent` override becomes a FetchFn of its own;
+    otherwise fall through to `None` so load_site/run_fleet use safe_fetch's
+    own DEFAULT_USER_AGENT."""
+    if fetch_fn is not None:
+        return fetch_fn
+    return with_user_agent(user_agent) if user_agent is not None else None
+
+
 def run_init_command(target_path: str, site_url: Optional[str], json_output: bool) -> CommandOutput:
     try:
         result = init_project(target_path, site_url or "")
@@ -48,11 +59,16 @@ def run_init_command(target_path: str, site_url: Optional[str], json_output: boo
         return _error_output(err)
 
 
-def run_check_command(target_path: str, json_output: bool, fetch_fn: Optional[FetchFn] = None) -> CommandOutput:
+def run_check_command(
+    target_path: str,
+    json_output: bool,
+    fetch_fn: Optional[FetchFn] = None,
+    user_agent: Optional[str] = None,
+) -> CommandOutput:
     try:
         _require_directory(target_path)
         config = load_config(target_path)
-        ctx = load_site(config.site_url, fetch_fn)
+        ctx = load_site(config.site_url, _resolve_fetch_fn(user_agent, fetch_fn))
         results = run_checks(select_checks(config), ctx)
         stdout = format_check_results_json(config.site_url, results) if json_output else format_check_results_text(config.site_url, results)
         return CommandOutput(exit_code=1 if has_failure(results) else 0, stdout=stdout)
@@ -60,9 +76,14 @@ def run_check_command(target_path: str, json_output: bool, fetch_fn: Optional[Fe
         return _error_output(err)
 
 
-def run_fleet_command(manifest_path: str, json_output: bool, fetch_fn: Optional[FetchFn] = None) -> CommandOutput:
+def run_fleet_command(
+    manifest_path: str,
+    json_output: bool,
+    fetch_fn: Optional[FetchFn] = None,
+    user_agent: Optional[str] = None,
+) -> CommandOutput:
     try:
-        site_results = run_fleet(manifest_path, fetch_fn)
+        site_results = run_fleet(manifest_path, _resolve_fetch_fn(user_agent, fetch_fn))
         stdout = format_fleet_results_json(site_results) if json_output else format_fleet_results_text(site_results)
         any_failure = any(s.error is not None or not s.ok for s in site_results)
         return CommandOutput(exit_code=1 if any_failure else 0, stdout=stdout)

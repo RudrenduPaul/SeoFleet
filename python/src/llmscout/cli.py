@@ -30,6 +30,10 @@ def build_parser() -> argparse.ArgumentParser:
         "--json", action="store_true", default=False,
         help="output structured JSON instead of human-readable text",
     )
+    parser.add_argument(
+        "--user-agent", dest="user_agent", default=None,
+        help="override the default User-Agent header sent on outbound fetches",
+    )
 
     subparsers = parser.add_subparsers(dest="command")
 
@@ -75,9 +79,9 @@ def run_cli(argv: List[str]) -> int:
     if args.command == "init":
         result = run_init_command(args.path, args.site_url, args.json)
     elif args.command == "check":
-        result = run_check_command(args.path, args.json)
+        result = run_check_command(args.path, args.json, user_agent=args.user_agent)
     elif args.command == "fleet":
-        result = run_fleet_command(args.config_json, args.json)
+        result = run_fleet_command(args.config_json, args.json, user_agent=args.user_agent)
     else:  # pragma: no cover - argparse restricts to the registered subcommands
         parser.print_help()
         return 0

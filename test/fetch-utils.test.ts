@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { assertHttpUrl, safeFetch } from "../src/fetch-utils.js";
+import { DEFAULT_USER_AGENT, assertHttpUrl, safeFetch, withUserAgent } from "../src/fetch-utils.js";
 import { LLMScoutError } from "../src/errors.js";
 
 afterEach(() => {
@@ -164,5 +164,50 @@ describe("safeFetch", () => {
     const result = await safeFetch("https://example.com");
     expect(result.ok).toBe(false);
     expect(result.error).toMatch(/exceeded.*byte limit/);
+  });
+
+  it("sends a Chrome-like default User-Agent when the caller sets none", async () => {
+    const fetchMock = vi.fn(async () => new Response("hello", { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await safeFetch("https://example.com");
+    const callInit = fetchMock.mock.calls[0][1] as RequestInit;
+    const headers = new Headers(callInit.headers);
+    expect(headers.get("user-agent")).toBe(DEFAULT_USER_AGENT);
+    expect(DEFAULT_USER_AGENT).toMatch(/Chrome/);
+  });
+
+  it("lets a caller-supplied User-Agent header override the default", async () => {
+    const fetchMock = vi.fn(async () => new Response("hello", { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await safeFetch("https://example.com", { headers: { "User-Agent": "MyCustomBot/1.0" } });
+    const callInit = fetchMock.mock.calls[0][1] as RequestInit;
+    const headers = new Headers(callInit.headers);
+    expect(headers.get("user-agent")).toBe("MyCustomBot/1.0");
+  });
+
+  it("preserves the custom User-Agent across a redirect hop", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(null, { status: 302, headers: { location: "https://example.com/final" } }))
+      .mockResolvedValueOnce(new Response("final page", { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await safeFetch("https://example.com/start", { headers: { "User-Agent": "MyCustomBot/1.0" } });
+    for (const call of fetchMock.mock.calls) {
+      const headers = new Headers((call[1] as RequestInit).headers);
+      expect(headers.get("user-agent")).toBe("MyCustomBot/1.0");
+    }
+  });
+});
+
+describe("withUserAgent", () => {
+  it("builds a FetchFn that sends the given User-Agent", async () => {
+    const fetchMock = vi.fn(async () => new Response("hello", { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const fetchFn = withUserAgent("MyCustomBot/1.0");
+    const result = await fetchFn("https://example.com");
+    expect(result.ok).toBe(true);
+    const callInit = fetchMock.mock.calls[0][1] as RequestInit;
+    const headers = new Headers(callInit.headers);
+    expect(headers.get("user-agent")).toBe("MyCustomBot/1.0");
   });
 });
