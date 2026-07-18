@@ -18,7 +18,7 @@ parse the homepage once (cheerio on the TS side; a small stdlib
 html.parser-based tree on the Python side) into a shared CheckContext
      |
      v
-run the selected checks (7 technical + 5 GEO, or a subset per
+run the selected checks (12 technical + 9 GEO, or a subset per
 LLMScout.json's checks.technical/checks.geo flags) against that one
 shared context -- a check raising becomes a FAIL result citing the error,
 never a crash of the whole run
@@ -44,9 +44,9 @@ wrong (an unreachable homepage, a network timeout, a malformed
 `check`/`fleet` exit `1` if and only if at least one check result is
 FAIL. A run with only WARNs still exits `0`.
 
-## The 12 checks
+## The 21 checks
 
-### Technical SEO (7)
+### Technical SEO (12)
 
 **Title tag** (`title`) -- a `<title>` exists and is 10-60 characters.
 Missing/empty is FAIL; too short or too long is WARN; in-range is PASS.
@@ -83,7 +83,32 @@ correct, intentional markup for a decorative image; only a fully missing
 `alt` attribute counts against coverage. No images is PASS; ≥80% coverage
 with some gaps is WARN; below 80% is FAIL.
 
-### GEO / generative engine optimization (5)
+**Open Graph tags** (`open-graph`) -- `og:title`, `og:description`,
+`og:image`, and `og:url` meta tags are present, for rich link previews on
+social platforms. All four present is PASS; some but not all is WARN with
+the missing tags named; none is WARN.
+
+**Twitter/X Card tags** (`twitter-card`) -- a valid `twitter:card` meta tag
+(`summary`, `summary_large_image`, `app`, or `player`) and its required
+companion fields are present. An unrecognized card type is FAIL; missing
+entirely or missing required fields is WARN; valid and complete is PASS.
+
+**Meta robots directives** (`robots-meta-directives`) -- advanced snippet-
+control directives (`max-snippet`, `max-image-preview`, `max-video-preview`)
+are set in a `<meta name="robots">` tag. An outright `noindex` is FAIL;
+missing or partial advanced directives is WARN; all three set is PASS.
+
+**Image weight** (`image-weight`) -- each `<img>` with an `http(s)` `src`
+is HEAD-requested to measure its actual byte size. Over 500KB for any image
+is FAIL; over 200KB is WARN; everything under that (or no measurable
+images) is PASS.
+
+**Redirect chain** (`redirect-chain`) -- the homepage's actual followed
+redirect chain (not just its final status). A chain that dead-ends in a
+4xx/5xx status is FAIL; a chain longer than two hops is WARN; zero or one
+to two hops resolving cleanly is PASS.
+
+### GEO / generative engine optimization (9)
 
 **Structured data** (`structured-data`) -- at least one
 `<script type="application/ld+json">` block exists and parses as valid
@@ -96,12 +121,15 @@ This is an emerging, not-yet-universal convention (see
 FAIL.
 
 **AI crawler directives** (`ai-crawler-directives`) -- reports (never
-prescribes) the robots.txt allow/disallow state for four AI crawlers:
-`GPTBot`, `ClaudeBot`, `PerplexityBot`, `Google-Extended`. If robots.txt is
-unreachable the check WARNs (directives can't be determined); otherwise it
-PASSes and states each bot's directive as `allow`/`disallow`/
-`unspecified`. Whether to allow or block any of these bots is a genuine
-site-owner decision this check does not take a position on.
+prescribes) the robots.txt allow/disallow state for seven AI crawlers,
+training and search/retrieval crawlers tracked separately since OpenAI and
+Anthropic run them as independently blockable user agents: `GPTBot`,
+`OAI-SearchBot`, `ClaudeBot`, `Claude-SearchBot`, `PerplexityBot`,
+`Google-Extended`, `Applebot-Extended`. If robots.txt is unreachable the
+check WARNs (directives can't be determined); otherwise it PASSes and
+states each bot's directive as `allow`/`disallow`/`unspecified`. Whether to
+allow or block any of these bots is a genuine site-owner decision this
+check does not take a position on.
 
 **FAQ schema** (`faq-schema`) -- `FAQPage` JSON-LD structured data is
 present (including a `FAQPage` type nested inside an `@graph` array).
@@ -119,17 +147,41 @@ only -- it cannot evaluate content that only appears after client-side
 JavaScript renders, and it cannot judge semantic quality. Treat a WARN
 here as "worth a manual look," not a definitive verdict.
 
+**Speakable schema** (`speakable-schema`) -- a `SpeakableSpecification` is
+present in JSON-LD (top-level or nested inside a `WebPage`/`Article`),
+naming the CSS selectors or `xpath` a voice assistant should read aloud.
+Absence is WARN only -- informational, and only relevant to content
+actually suited for voice.
+
+**Organization schema** (`organization-schema`) -- `Organization`,
+`Corporation`, `LocalBusiness`, or `Person` JSON-LD is present, ideally
+with a `sameAs` array of official social/profile URLs (a real Knowledge
+Panel signal). Absence is WARN.
+
+**Markdown content negotiation** (`markdown-negotiation`) -- the homepage
+is re-requested with `Accept: text/markdown` and the response
+`Content-Type` is checked. A `text/markdown` response is PASS; anything
+else (including a request failure) is WARN -- this is an emerging,
+non-standard capability, not yet supported by any major AI crawler in
+practice, so its absence is never penalized as a defect.
+
+**Link header** (`link-header`) -- whether the homepage response sends an
+RFC 8288 `Link` header (e.g. advertising a feed or an API discovery
+endpoint). Absence is WARN only -- informational.
+
 ## Fleet mode
 
-`fleet <manifest.json>` runs the full 12-check suite against every site
+`fleet <manifest.json>` runs the full 21-check suite against every site
 declared in a local JSON manifest (`{"sites": [{"name", "path"}]}`) in one
 invocation. Each entry's `path` points at a directory with its own
 `LLMScout.json`; relative paths resolve against the manifest file's own
 directory (not the process's working directory), so the same manifest
-works no matter where it's invoked from. Fleet mode reads the local
-filesystem only -- there is no SSH and no remote execution; each site's
-own `siteUrl` is fetched over `http(s)` exactly as `check` would fetch it
-directly.
+works no matter where it's invoked from. Pass `--out-dir <dir>` to also
+write one auto-named report file per site (named from the manifest's
+`name` field) instead of only a combined stdout summary. Fleet mode reads
+the local filesystem only -- there is no SSH and no remote execution; each
+site's own `siteUrl` is fetched over `http(s)` exactly as `check` would
+fetch it directly.
 
 ## Fetch safety
 

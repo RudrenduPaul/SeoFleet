@@ -3,7 +3,44 @@
 All notable changes to LLMScout are documented in this file. This
 changelog covers both distributions -- the npm package (`LLMScout-cli`,
 TypeScript) and the PyPI package (`LLMScout-cli`, Python) -- since they
-run the same 12 checks; entries note which distribution they apply to.
+run the same checks; entries note which distribution they apply to.
+
+## [0.2.0] - 2026-07-18
+
+Nine new checks (nine, not eight -- one item shipped as a bug fix to an
+existing check rather than a new one) bringing the total from 12 to 21,
+plus two CLI features, in both the npm and PyPI distributions.
+
+### Added
+
+- `open-graph`, `twitter-card`, and `robots-meta-directives` technical
+  checks.
+- `speakable-schema`, `organization-schema`, `markdown-negotiation`, and
+  `link-header` GEO checks.
+- `image-weight` and `redirect-chain` technical checks, reusing the
+  redirect-hop data the fetch layer already computed internally.
+- `--user-agent <string>` global flag to override the default outbound
+  User-Agent; the default itself changed from a bot-style identifying
+  string to a real browser User-Agent, since some SSR frameworks and CDNs
+  reject non-browser UAs outright.
+- `--out-dir <dir>` flag on `check` and `fleet`, writing one auto-named
+  report file per site (slugified from the site URL, or the fleet
+  manifest's `name` field) instead of only a combined stdout summary.
+- `ai-crawler-directives` now tracks `OAI-SearchBot` and `Claude-SearchBot`
+  as crawlers separate from their training-only counterparts (`GPTBot`,
+  `ClaudeBot`), plus `Applebot-Extended` -- seven bots total, up from four.
+- Sitemap discovery now falls back to a robots.txt `Sitemap:` directive
+  when the default `/sitemap.xml` isn't reachable.
+
+### Fixed
+
+- `sitemap-xml` now detects an HTML-shaped response body (e.g. a CDN
+  challenge page) and reports it distinctly from a genuinely malformed
+  sitemap.
+- `redirect-chain`'s FAIL condition previously could not fire against real
+  fetch output, since it only inspected the `hops` array, which by
+  construction never contains a terminal error status. It now also checks
+  the resource's own terminal status.
 
 ## [Python 0.1.0] - 2026-07-16
 

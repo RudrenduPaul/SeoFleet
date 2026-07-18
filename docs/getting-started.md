@@ -1,6 +1,6 @@
 # Getting started
 
-LLMScout checks a site for 12 technical-SEO and GEO (generative-engine-
+LLMScout checks a site for 21 technical-SEO and GEO (generative-engine-
 optimization) issues and reports PASS/WARN/FAIL per check, with a fix
 suggestion for anything short of a clean pass. It ships as two
 independent, equally first-class packages: an npm package (`LLMScout-cli`,
@@ -11,10 +11,9 @@ whichever fits your toolchain, or install both.
 
 **npm (JS/TS CLI):**
 
-The npm package is currently blocked on a transient npm-registry rate
-limit; install from source in the meantime (`git clone` + `npm install &&
-npm run build && npm link` -- see the
-[project README](../README.md#install)).
+```bash
+npm install -g LLMScout-cli
+```
 
 **pip (Python CLI + library):**
 
@@ -35,7 +34,7 @@ LLMScout check ./my-site
 
 `init` scaffolds a `LLMScout.json` (and a Claude Code skill file) in the
 target directory; it is idempotent, so re-running it never clobbers an
-already-configured `siteUrl`. `check` runs all 12 checks against the
+already-configured `siteUrl`. `check` runs all 21 checks against the
 configured `siteUrl` and prints one PASS/WARN/FAIL line per check.
 
 Real output (Python CLI shown; the npm CLI's human-readable output is
@@ -57,7 +56,7 @@ LLMScout check -- https://example.com
 
 ...
 
-Summary: 4 PASS, 7 WARN, 1 FAIL (12 checks)
+Summary: 6 PASS, 14 WARN, 1 FAIL (21 checks)
 ```
 
 `check` exits `0` when no check FAILs, `1` when at least one check FAILs
@@ -95,7 +94,7 @@ Both return the same shape of result: one entry per check with `id`,
 
 ## Next steps
 
-- [concepts.md](./concepts.md) -- what each of the 12 checks actually
+- [concepts.md](./concepts.md) -- what each of the 21 checks actually
   verifies, and how the check pipeline decides a verdict.
 - [integrations/ci.md](./integrations/ci.md) -- wiring LLMScout into a CI
   pipeline.

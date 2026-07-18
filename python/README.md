@@ -1,6 +1,6 @@
 # LLMScout-cli (Python)
 
-Zero-config SEO and GEO (generative engine optimization) checker: 12 checks
+Zero-config SEO and GEO (generative engine optimization) checker: 21 checks
 against a live site, plus a multi-site fleet mode for agencies checking
 several client sites at once, in pure Python with no extra runtime
 toolchain -- no headless browser, no separate interpreter to provision.
@@ -13,16 +13,21 @@ toolchain -- no headless browser, no separate interpreter to provision.
 
 ## Why this exists
 
-LLMScout checks a website for 12 common technical-SEO and GEO issues --
+LLMScout checks a website for 21 technical-SEO and GEO issues --
 title/meta description length, canonical tags, robots.txt/sitemap.xml
-reachability, heading structure, image alt coverage, JSON-LD structured
-data, llms.txt, AI-crawler directives, FAQ schema, and content-extraction
-friendliness -- and reports PASS/WARN/FAIL with a fix suggestion for
-anything short of a clean pass. This package is the Python
-distribution of the tool: a genuine, independent port of the npm CLI's
-logic, not a wrapper around the Node binary. It ships with **zero runtime
-dependencies** -- HTML parsing and HTTP fetching both use only the Python
-standard library.
+reachability (with a robots.txt `Sitemap:` fallback), heading structure,
+image alt coverage and weight, Open Graph and Twitter Card tags, meta
+robots directives, redirect-chain health, JSON-LD structured data, llms.txt,
+AI-crawler directives (training and search crawlers tracked separately --
+GPTBot/OAI-SearchBot, ClaudeBot/Claude-SearchBot, PerplexityBot,
+Google-Extended, Applebot-Extended), FAQ schema, Speakable schema,
+Organization schema, Markdown content negotiation, an RFC 8288 Link header,
+and content-extraction friendliness -- and reports PASS/WARN/FAIL with a
+fix suggestion for anything short of a clean pass. This package is the
+Python distribution of the tool: a genuine, independent port of the npm
+CLI's logic, not a wrapper around the Node binary. It ships with **zero
+runtime dependencies** -- HTML parsing and HTTP fetching both use only the
+Python standard library.
 
 ## Install
 
@@ -37,14 +42,11 @@ uv add LLMScout-cli
 ```
 
 The complementary JS/TS distribution installs from npm:
-`npm install --save-dev LLMScout-cli` -- see the
+`npm install -g LLMScout-cli` -- see the
 [project README](https://github.com/RudrenduPaul/LLMScout#readme) for that
-package. **Note**: as of this writing the npm package has a completed
-`npm login` but is pending only a transient npm-registry rate limit
-(HTTP 429), not a code-readiness issue; install from source in the
-meantime per the project README's Install section. Both packages read the
-same 12-check spec and are intended to report the same PASS/WARN/FAIL
-verdicts for the same site; neither is deprecated in favor of the other.
+package. Both packages read the same 21-check spec and are intended to
+report the same PASS/WARN/FAIL verdicts for the same site; neither is
+deprecated in favor of the other.
 
 ## Quickstart
 
@@ -54,7 +56,7 @@ LLMScout check ./my-site
 ```
 
 `init` scaffolds a `LLMScout.json` config (and a Claude Code skill file) in
-the target directory; `check` runs all 12 checks against the configured
+the target directory; `check` runs all 21 checks against the configured
 `siteUrl` and prints a PASS/WARN/FAIL line per check plus a summary. Pass
 `--json` before the subcommand for structured output an agent can parse:
 
@@ -77,11 +79,11 @@ for r in results:
 
 ```
 LLMScout.json -> site URL -> fetch homepage + robots.txt + sitemap.xml + llms.txt (parallel)
-   -> 12 checks (7 technical + 5 GEO) run against the shared fetched context
+   -> 21 checks (12 technical + 9 GEO) run against the shared fetched context
    -> PASS / WARN / FAIL per check -> exit code (0 clean / 1 any FAIL / 2 usage error)
 ```
 
-Full data model, the 12 checks explained, and fleet-mode semantics are in
+Full data model, the 21 checks explained, and fleet-mode semantics are in
 [docs/concepts.md](https://github.com/RudrenduPaul/LLMScout/blob/main/docs/concepts.md)
 and [docs/getting-started.md](https://github.com/RudrenduPaul/LLMScout/blob/main/docs/getting-started.md).
 The checks are reimplemented as genuine Python logic against the same
@@ -94,10 +96,12 @@ see those docs for what each check actually verifies.
 LLMScout fleet ./fleet.json
 ```
 
-Runs the full 12-check suite against every site declared in a local JSON
+Runs the full 21-check suite against every site declared in a local JSON
 manifest (`{"sites": [{"name": ..., "path": ...}]}`) in one invocation --
 local filesystem only, no SSH, no remote execution. Aimed at agencies or
-teams checking several client repos side by side.
+teams checking several client repos side by side. Add `--out-dir ./reports`
+to also write one auto-named report file per site, named from the
+manifest's `name` field.
 
 ## CI integration
 
