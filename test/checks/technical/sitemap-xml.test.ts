@@ -19,6 +19,54 @@ describe("sitemapXmlCheck", () => {
     expect(result.status).toBe("FAIL");
   });
 
+  it("FAILs with a CDN-interception message when the reachable body is HTML-shaped (e.g. Cloudflare challenge page)", async () => {
+    const result = await sitemapXmlCheck.run(
+      makeCheckContext(null, {
+        sitemapXml: {
+          url: "https://acme.example/sitemap.xml",
+          ok: true,
+          status: 200,
+          body: "<!doctype html><html><head><title>Attention Required!</title></head><body>Cloudflare</body></html>",
+        },
+      }),
+    );
+    expect(result.status).toBe("FAIL");
+    expect(result.message).toContain("CDN");
+    expect(result.message).toContain("Cloudflare");
+    expect(result.message).not.toContain("missing <urlset> or <sitemapindex>");
+  });
+
+  it("FAILs with a CDN-interception message when the body is a bare <html> tag with leading whitespace", async () => {
+    const result = await sitemapXmlCheck.run(
+      makeCheckContext(null, {
+        sitemapXml: {
+          url: "https://acme.example/sitemap.xml",
+          ok: true,
+          status: 200,
+          body: "\n  <html><body>Access denied</body></html>",
+        },
+      }),
+    );
+    expect(result.status).toBe("FAIL");
+    expect(result.message).toContain("CDN");
+  });
+
+  it("FAILs with the generic malformed-XML message when the body is not HTML-shaped", async () => {
+    const result = await sitemapXmlCheck.run(
+      makeCheckContext(null, {
+        sitemapXml: {
+          url: "https://acme.example/sitemap.xml",
+          ok: true,
+          status: 200,
+          body: "<urlst><url><loc>https://acme.example/</loc></url></urlst>",
+        },
+      }),
+    );
+    expect(result.status).toBe("FAIL");
+    expect(result.message).toContain("missing <urlset> or <sitemapindex>");
+    expect(result.message).not.toContain("CDN");
+  });
+
   it("PASSes when sitemap.xml is reachable and looks valid", async () => {
     const result = await sitemapXmlCheck.run(
       makeCheckContext(null, {

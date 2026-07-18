@@ -9,6 +9,18 @@ function looksLikeSitemapXml(body: string): boolean {
   return /<urlset[\s>]/i.test(body) || /<sitemapindex[\s>]/i.test(body);
 }
 
+/**
+ * True when a reachable-but-invalid body is HTML-shaped rather than
+ * malformed XML -- the telltale sign of a CDN/edge/bot-management layer
+ * (e.g. Cloudflare) intercepting the request and returning a challenge or
+ * error page instead of the real sitemap. Only checks the leading, possibly
+ * whitespace-padded, start of the body so a genuine sitemap that merely
+ * mentions "html" somewhere in a <loc> URL is never misclassified.
+ */
+function looksLikeHtmlInterception(body: string): boolean {
+  return /^\s*(<!doctype\s+html|<html[\s>])/i.test(body);
+}
+
 export const sitemapXmlCheck: Check = {
   id: ID,
   name: NAME,
@@ -33,6 +45,14 @@ export const sitemapXmlCheck: Check = {
 
     const reachableButInvalid = candidates.find((candidate) => candidate.ok);
     if (reachableButInvalid) {
+      if (looksLikeHtmlInterception(reachableButInvalid.body ?? "")) {
+        return {
+          ...base,
+          status: "FAIL",
+          message: `A sitemap request to ${reachableButInvalid.url} returned an HTML page instead of sitemap XML -- this usually means a CDN, edge, or bot-management layer (e.g. Cloudflare) is intercepting the request with a challenge or error page rather than serving the real sitemap.`,
+          fix: "Check your CDN/edge/bot-management configuration (e.g. Cloudflare's bot fight mode or WAF rules) to allow sitemap.xml requests through to the origin.",
+        };
+      }
       return {
         ...base,
         status: "FAIL",
