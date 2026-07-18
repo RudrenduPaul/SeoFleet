@@ -14,9 +14,11 @@ from LLMScout.checks.technical.redirect_chain import redirect_chain_check
 from LLMScout.checks.technical.robots_txt import robots_txt_check
 from LLMScout.checks.technical.sitemap_xml import sitemap_xml_check
 from LLMScout.checks.technical.title import title_check
-from LLMScout.fetch_utils import FetchedResource, Hop
+from LLMScout import fetch_utils
+from LLMScout.fetch_utils import FetchedResource, Hop, safe_fetch
 
 from .conftest import GOOD_HTML, make_check_context, make_fetch_stub
+from .test_fetch_utils import _http_error
 
 
 class TestTitleCheck:
@@ -284,16 +286,47 @@ class TestRedirectChainCheck:
         assert result.status == "WARN"
         assert "3 redirect hops" in result.message
 
-    def test_fails_when_an_intermediate_hop_errored(self):
-        homepage = FetchedResource(
-            url="https://acme.example/",
-            ok=False,
-            status=500,
-            error="boom",
-            hops=[Hop(url="https://acme.example/", status=500)],
-        )
+    def test_fails_when_the_chain_dead_ends_in_a_terminal_error_status(self, monkeypatch):
+        # Real safe_fetch output: a Hop is only ever appended inside
+        # safe_fetch's own 3xx redirect branch, so an error can never
+        # appear as a hops[] entry -- it always lands on the final
+        # FetchedResource's own status/ok instead. Drive the real fetch
+        # wrapper through a 301 that dead-ends in a 404 so the test
+        # exercises a shape safe_fetch can actually produce, rather than a
+        # hand-built hops list it never would.
+        responses = [
+            _http_error("https://acme.example/", 301, {"Location": "https://acme.example/gone"}),
+            _http_error("https://acme.example/gone", 404, body=b"not found"),
+        ]
+
+        def fake_open(request, *a, **k):
+            raise responses.pop(0)
+
+        monkeypatch.setattr(fetch_utils._opener, "open", fake_open)
+        homepage = safe_fetch("https://acme.example/")
+        assert homepage.ok is False
+        assert homepage.status == 404
+        assert homepage.hops == [Hop(url="https://acme.example/", status=301)]
+
         ctx = make_check_context(GOOD_HTML)
         ctx.resources.homepage = homepage
         result = redirect_chain_check.run(ctx)
         assert result.status == "FAIL"
-        assert "HTTP 500" in result.message
+        assert "HTTP 404" in result.message
+
+    def test_fails_even_for_a_single_redirect_if_the_chain_dead_ends_in_an_error(self, monkeypatch):
+        responses = [
+            _http_error("https://acme.example/", 302, {"Location": "https://acme.example/old"}),
+            _http_error("https://acme.example/old", 500, body=b"server error"),
+        ]
+
+        def fake_open(request, *a, **k):
+            raise responses.pop(0)
+
+        monkeypatch.setattr(fetch_utils._opener, "open", fake_open)
+        homepage = safe_fetch("https://acme.example/")
+
+        ctx = make_check_context(GOOD_HTML)
+        ctx.resources.homepage = homepage
+        result = redirect_chain_check.run(ctx)
+        assert result.status == "FAIL"
