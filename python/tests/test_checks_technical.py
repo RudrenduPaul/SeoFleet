@@ -123,6 +123,45 @@ class TestSitemapXmlCheck:
         result = sitemap_xml_check.run(ctx)
         assert result.status == "PASS"
 
+    def test_passes_when_sitemap_xml_fails_but_a_robots_txt_discovered_candidate_is_valid(self):
+        body = '<?xml version="1.0"?><sitemapindex><sitemap><loc>https://acme.example/s1.xml</loc></sitemap></sitemapindex>'
+        ctx = make_check_context(
+            GOOD_HTML,
+            sitemap_xml=FetchedResource(url="https://acme.example/sitemap.xml", ok=False, status=404),
+            additional_sitemaps=[
+                FetchedResource(url="https://acme.example/sitemap_index.xml", ok=True, status=200, body=body)
+            ],
+        )
+        result = sitemap_xml_check.run(ctx)
+        assert result.status == "PASS"
+        assert "sitemap_index.xml" in result.message
+
+    def test_fails_when_sitemap_xml_unreachable_and_only_reachable_candidate_is_invalid(self):
+        ctx = make_check_context(
+            GOOD_HTML,
+            sitemap_xml=FetchedResource(url="https://acme.example/sitemap.xml", ok=False, status=404),
+            additional_sitemaps=[
+                FetchedResource(
+                    url="https://acme.example/sitemap_index.xml", ok=True, status=200, body="<html>not a sitemap</html>"
+                )
+            ],
+        )
+        result = sitemap_xml_check.run(ctx)
+        assert result.status == "FAIL"
+
+    def test_warns_only_once_every_candidate_fails(self):
+        ctx = make_check_context(
+            GOOD_HTML,
+            sitemap_xml=FetchedResource(url="https://acme.example/sitemap.xml", ok=False, status=404),
+            additional_sitemaps=[
+                FetchedResource(url="https://acme.example/sitemap_index.xml", ok=False, status=404)
+            ],
+        )
+        result = sitemap_xml_check.run(ctx)
+        assert result.status == "WARN"
+        assert "sitemap.xml" in result.message
+        assert "sitemap_index.xml" in result.message
+
 
 class TestHeadingStructureCheck:
     def test_fails_when_homepage_unreachable(self):

@@ -7,7 +7,7 @@ end-to-end smoke test that is explicitly opt-in (see test_e2e.py).
 """
 from __future__ import annotations
 
-from typing import Callable, Dict, Optional
+from typing import Callable, Dict, List, Optional
 
 from LLMScout.fetch_utils import FetchedResource
 from LLMScout.html_util import parse_html
@@ -64,6 +64,12 @@ GOOD_SITEMAP_XML = """<?xml version="1.0" encoding="UTF-8"?>
   <url><loc>https://acme.example/</loc></url>
 </urlset>"""
 
+ROBOTS_TXT_WITH_SITEMAP_DIRECTIVE = """User-agent: *
+Disallow:
+
+Sitemap: https://acme.example/sitemap_index.xml
+"""
+
 
 def make_fetch_stub(routes: Dict[str, Dict[str, object]]) -> Callable[[str], FetchedResource]:
     """Builds a fetch function stub keyed by exact URL. No real network
@@ -91,6 +97,7 @@ def make_check_context(
     robots_txt: Optional[FetchedResource] = None,
     sitemap_xml: Optional[FetchedResource] = None,
     llms_txt: Optional[FetchedResource] = None,
+    additional_sitemaps: Optional[List[FetchedResource]] = None,
     site_url: str = "https://acme.example/",
 ) -> CheckContext:
     """
@@ -109,5 +116,6 @@ def make_check_context(
         robots_txt=robots_txt or FetchedResource(url=site_url.rstrip("/") + "/robots.txt", ok=False, status=404),
         sitemap_xml=sitemap_xml or FetchedResource(url=site_url.rstrip("/") + "/sitemap.xml", ok=False, status=404),
         llms_txt=llms_txt or FetchedResource(url=site_url.rstrip("/") + "/llms.txt", ok=False, status=404),
+        additional_sitemaps=additional_sitemaps or [],
     )
     return CheckContext(resources=resources, root=parse_html(html) if html is not None else None)
