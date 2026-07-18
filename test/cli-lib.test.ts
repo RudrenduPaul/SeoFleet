@@ -1,7 +1,7 @@
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { runCheckCommand, runFleetCommand, runInitCommand } from "../src/cli-lib.js";
 import { GOOD_HTML, GOOD_ROBOTS_TXT, GOOD_SITEMAP_XML, makeFetchStub } from "./test-helpers.js";
 
@@ -73,6 +73,37 @@ describe("runCheckCommand", () => {
     const result = await runCheckCommand(dir, { json: false }, fetchStub);
     expect(result.exitCode).toBe(1);
     expect(result.stdout).toContain("[FAIL]");
+  });
+
+  it("sends the --user-agent override on every outbound fetch when no fetchFn stub is given", async () => {
+    writeFileSync(path.join(dir, "LLMScout.json"), JSON.stringify({ siteUrl: "https://good.example/" }), "utf-8");
+    const seenUserAgents: (string | null)[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_url: string, init?: RequestInit) => {
+        seenUserAgents.push(new Headers(init?.headers).get("user-agent"));
+        return new Response("", { status: 404 });
+      }),
+    );
+    try {
+      await runCheckCommand(dir, { json: true, userAgent: "MyCustomBot/1.0" });
+    } finally {
+      vi.unstubAllGlobals();
+    }
+    expect(seenUserAgents.length).toBeGreaterThan(0);
+    expect(seenUserAgents.every((ua) => ua === "MyCustomBot/1.0")).toBe(true);
+  });
+
+  it("prefers an explicit fetchFn stub over the --user-agent override", async () => {
+    writeFileSync(path.join(dir, "LLMScout.json"), JSON.stringify({ siteUrl: "https://good.example/" }), "utf-8");
+    const fetchStub = makeFetchStub({
+      "https://good.example/": { body: GOOD_HTML },
+      "https://good.example/robots.txt": { body: GOOD_ROBOTS_TXT },
+      "https://good.example/sitemap.xml": { body: GOOD_SITEMAP_XML },
+      "https://good.example/llms.txt": { status: 404, ok: false },
+    });
+    const result = await runCheckCommand(dir, { json: true, userAgent: "MyCustomBot/1.0" }, fetchStub);
+    expect(result.exitCode).toBe(0);
   });
 });
 

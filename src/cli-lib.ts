@@ -3,6 +3,7 @@ import { LLMScoutError } from "./errors.js";
 import { initProject } from "./init.js";
 import { loadConfig, selectChecks } from "./config.js";
 import { loadSite, type FetchFn } from "./site-resources.js";
+import { withUserAgent } from "./fetch-utils.js";
 import { runChecks, hasFailure } from "./runner.js";
 import { runFleet } from "./fleet.js";
 import {
@@ -33,6 +34,17 @@ function requireDirectory(targetPath: string): void {
   }
 }
 
+/**
+ * An explicitly-passed `fetchFn` (tests' fetch stubs) always wins. Failing
+ * that, a `--user-agent` override becomes a FetchFn of its own; otherwise
+ * fall through to `undefined` so loadSite/runFleet use safeFetch's own
+ * DEFAULT_USER_AGENT.
+ */
+function resolveFetchFn(userAgent: string | undefined, fetchFn: FetchFn | undefined): FetchFn | undefined {
+  if (fetchFn) return fetchFn;
+  return userAgent !== undefined ? withUserAgent(userAgent) : undefined;
+}
+
 export function runInitCommand(targetPath: string, opts: { siteUrl?: string; json: boolean }): CommandOutput {
   try {
     const result = initProject(targetPath, opts.siteUrl !== undefined ? { siteUrl: opts.siteUrl } : {});
@@ -45,13 +57,13 @@ export function runInitCommand(targetPath: string, opts: { siteUrl?: string; jso
 
 export async function runCheckCommand(
   targetPath: string,
-  opts: { json: boolean },
+  opts: { json: boolean; userAgent?: string },
   fetchFn?: FetchFn,
 ): Promise<CommandOutput> {
   try {
     requireDirectory(targetPath);
     const config = loadConfig(targetPath);
-    const ctx = await loadSite(config.siteUrl, fetchFn);
+    const ctx = await loadSite(config.siteUrl, resolveFetchFn(opts.userAgent, fetchFn));
     const results = await runChecks(selectChecks(config), ctx);
     const stdout = opts.json
       ? formatCheckResultsJson(config.siteUrl, results)
@@ -64,11 +76,11 @@ export async function runCheckCommand(
 
 export async function runFleetCommand(
   manifestPath: string,
-  opts: { json: boolean },
+  opts: { json: boolean; userAgent?: string },
   fetchFn?: FetchFn,
 ): Promise<CommandOutput> {
   try {
-    const siteResults = await runFleet(manifestPath, fetchFn);
+    const siteResults = await runFleet(manifestPath, resolveFetchFn(opts.userAgent, fetchFn));
     const stdout = opts.json ? formatFleetResultsJson(siteResults) : formatFleetResultsText(siteResults);
     const anyFailure = siteResults.some((s) => s.error !== undefined || !s.ok);
     return { exitCode: anyFailure ? 1 : 0, stdout };

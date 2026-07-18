@@ -30,6 +30,16 @@ const MAX_REDIRECTS = 5;
 const FETCH_TIMEOUT_MS = 10_000;
 const MAX_BODY_BYTES = 10 * 1024 * 1024; // 10 MiB
 
+/**
+ * Sent on every outbound fetch unless the caller's `init.headers` already
+ * sets a User-Agent. Undici (Node's built-in fetch) sends the literal
+ * string "node" when no header is set at all, and some SSR frameworks/CDNs
+ * reject non-browser or bot-style UAs outright -- a real Chrome UA is the
+ * safest default for a tool whose whole job is fetching arbitrary sites.
+ */
+export const DEFAULT_USER_AGENT =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+
 function parseIPv4(hostname: string): [number, number, number, number] | null {
   const match = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(hostname);
   if (!match) return null;
@@ -182,11 +192,17 @@ export async function safeFetch(rawUrl: string, init?: RequestInit): Promise<Fet
   const hops: { url: string; status: number }[] = [];
   const hopsField = (): { hops?: { url: string; status: number }[] } => (hops.length > 0 ? { hops: [...hops] } : {});
 
+  const headers = new Headers(init?.headers);
+  if (!headers.has("user-agent")) {
+    headers.set("user-agent", DEFAULT_USER_AGENT);
+  }
+
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
     let response: Response;
     try {
       response = await fetch(current.toString(), {
         ...init,
+        headers,
         redirect: "manual",
         signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       });
@@ -265,4 +281,15 @@ export async function safeFetch(rawUrl: string, init?: RequestInit): Promise<Fet
     error: `Too many redirects (> ${MAX_REDIRECTS})`,
     ...hopsField(),
   };
+}
+
+/**
+ * Builds a single-argument `(url) => Promise<FetchedResource>` fetcher --
+ * the shape `FetchFn` expects -- that sends `userAgent` on every request
+ * instead of DEFAULT_USER_AGENT. This is how the CLI's `--user-agent`
+ * override flag reaches safeFetch without widening the FetchFn signature
+ * every caller (including tests' fetch stubs) already depends on.
+ */
+export function withUserAgent(userAgent: string): (rawUrl: string) => Promise<FetchedResource> {
+  return (rawUrl: string) => safeFetch(rawUrl, { headers: { "User-Agent": userAgent } });
 }
