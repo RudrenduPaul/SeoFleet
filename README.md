@@ -6,6 +6,7 @@ Runs 21 technical-SEO and GEO (generative-engine-optimization) checks against yo
 
 [![CI](https://github.com/RudrenduPaul/LLMScout/actions/workflows/ci.yml/badge.svg)](https://github.com/RudrenduPaul/LLMScout/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/LLMScout-cli.svg)](https://www.npmjs.com/package/LLMScout-cli)
+[![PyPI version](https://img.shields.io/pypi/v/LLMScout-cli.svg)](https://pypi.org/project/LLMScout-cli/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 
 </div>
