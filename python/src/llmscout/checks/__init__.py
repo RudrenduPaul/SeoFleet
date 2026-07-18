@@ -8,14 +8,19 @@ from .geo.ai_crawler_directives import ai_crawler_directives_check
 from .geo.content_extraction import content_extraction_check
 from .geo.faq_schema import faq_schema_check
 from .geo.llms_txt import llms_txt_check
+from .geo.organization_schema import organization_schema_check
+from .geo.speakable_schema import speakable_schema_check
 from .geo.structured_data import structured_data_check
 from .technical.canonical import canonical_check
 from .technical.heading_structure import heading_structure_check
 from .technical.image_alt import image_alt_check
 from .technical.meta_description import meta_description_check
+from .technical.open_graph import open_graph_check
+from .technical.robots_meta_directives import robots_meta_directives_check
 from .technical.robots_txt import robots_txt_check
 from .technical.sitemap_xml import sitemap_xml_check
 from .technical.title import title_check
+from .technical.twitter_card import twitter_card_check
 
 TECHNICAL_CHECKS: List[Check] = [
     title_check,
@@ -25,6 +30,9 @@ TECHNICAL_CHECKS: List[Check] = [
     sitemap_xml_check,
     heading_structure_check,
     image_alt_check,
+    open_graph_check,
+    twitter_card_check,
+    robots_meta_directives_check,
 ]
 
 GEO_CHECKS: List[Check] = [
@@ -33,6 +41,8 @@ GEO_CHECKS: List[Check] = [
     ai_crawler_directives_check,
     faq_schema_check,
     content_extraction_check,
+    speakable_schema_check,
+    organization_schema_check,
 ]
 
 ALL_CHECKS: List[Check] = [*TECHNICAL_CHECKS, *GEO_CHECKS]
@@ -48,9 +58,14 @@ __all__ = [
     "sitemap_xml_check",
     "heading_structure_check",
     "image_alt_check",
+    "open_graph_check",
+    "twitter_card_check",
+    "robots_meta_directives_check",
     "structured_data_check",
     "llms_txt_check",
     "ai_crawler_directives_check",
     "faq_schema_check",
     "content_extraction_check",
+    "speakable_schema_check",
+    "organization_schema_check",
 ]

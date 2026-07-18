@@ -9,9 +9,12 @@ from LLMScout.checks.technical.canonical import canonical_check
 from LLMScout.checks.technical.heading_structure import heading_structure_check
 from LLMScout.checks.technical.image_alt import image_alt_check
 from LLMScout.checks.technical.meta_description import meta_description_check
+from LLMScout.checks.technical.open_graph import open_graph_check
+from LLMScout.checks.technical.robots_meta_directives import robots_meta_directives_check
 from LLMScout.checks.technical.robots_txt import robots_txt_check
 from LLMScout.checks.technical.sitemap_xml import sitemap_xml_check
 from LLMScout.checks.technical.title import title_check
+from LLMScout.checks.technical.twitter_card import twitter_card_check
 from LLMScout.fetch_utils import FetchedResource
 
 from .conftest import GOOD_HTML, make_check_context
@@ -172,3 +175,105 @@ class TestImageAltCheck:
         html = '<html><body><img src="a.png"><img src="b.png"></body></html>'
         result = image_alt_check.run(make_check_context(html))
         assert result.status == "FAIL"
+
+
+class TestOpenGraphCheck:
+    def test_fails_when_homepage_unreachable(self):
+        result = open_graph_check.run(make_check_context(None))
+        assert result.status == "FAIL"
+
+    def test_warns_when_no_og_tags(self):
+        result = open_graph_check.run(make_check_context("<html><head></head></html>"))
+        assert result.status == "WARN"
+        assert "No Open Graph tags found" in result.message
+
+    def test_warns_and_lists_missing_when_partial(self):
+        html = (
+            '<html><head><meta property="og:title" content="Acme Widgets">'
+            '<meta property="og:description" content="Handmade widgets since 1990."></head></html>'
+        )
+        result = open_graph_check.run(make_check_context(html))
+        assert result.status == "WARN"
+        assert "og:image" in result.message
+        assert "og:url" in result.message
+
+    def test_passes_when_all_required_tags_present(self):
+        html = (
+            '<html><head>'
+            '<meta property="og:title" content="Acme Widgets">'
+            '<meta property="og:description" content="Handmade widgets since 1990.">'
+            '<meta property="og:image" content="https://acme.example/og.png">'
+            '<meta property="og:url" content="https://acme.example/">'
+            "</head></html>"
+        )
+        result = open_graph_check.run(make_check_context(html))
+        assert result.status == "PASS"
+
+
+class TestTwitterCardCheck:
+    def test_fails_when_homepage_unreachable(self):
+        result = twitter_card_check.run(make_check_context(None))
+        assert result.status == "FAIL"
+
+    def test_warns_when_no_card_tag(self):
+        result = twitter_card_check.run(make_check_context("<html><head></head></html>"))
+        assert result.status == "WARN"
+
+    def test_fails_on_unrecognized_card_type(self):
+        html = '<html><head><meta name="twitter:card" content="not-a-real-type"></head></html>'
+        result = twitter_card_check.run(make_check_context(html))
+        assert result.status == "FAIL"
+
+    def test_warns_when_valid_but_fields_missing(self):
+        html = '<html><head><meta name="twitter:card" content="summary_large_image"></head></html>'
+        result = twitter_card_check.run(make_check_context(html))
+        assert result.status == "WARN"
+        assert "twitter:title" in result.message
+
+    def test_passes_when_valid_and_all_fields_present(self):
+        html = (
+            '<html><head>'
+            '<meta name="twitter:card" content="summary_large_image">'
+            '<meta name="twitter:title" content="Acme Widgets">'
+            '<meta name="twitter:description" content="Handmade widgets since 1990.">'
+            '<meta name="twitter:image" content="https://acme.example/twitter.png">'
+            "</head></html>"
+        )
+        result = twitter_card_check.run(make_check_context(html))
+        assert result.status == "PASS"
+
+
+class TestRobotsMetaDirectivesCheck:
+    def test_fails_when_homepage_unreachable(self):
+        result = robots_meta_directives_check.run(make_check_context(None))
+        assert result.status == "FAIL"
+
+    def test_warns_when_no_meta_robots_tag(self):
+        result = robots_meta_directives_check.run(make_check_context("<html><head></head></html>"))
+        assert result.status == "WARN"
+
+    def test_fails_when_noindex_present(self):
+        html = '<html><head><meta name="robots" content="noindex, max-snippet:-1"></head></html>'
+        result = robots_meta_directives_check.run(make_check_context(html))
+        assert result.status == "FAIL"
+        assert "noindex" in result.message
+
+    def test_warns_when_no_advanced_directives(self):
+        html = '<html><head><meta name="robots" content="index, follow"></head></html>'
+        result = robots_meta_directives_check.run(make_check_context(html))
+        assert result.status == "WARN"
+
+    def test_warns_and_lists_missing_when_partial(self):
+        html = '<html><head><meta name="robots" content="max-snippet:-1"></head></html>'
+        result = robots_meta_directives_check.run(make_check_context(html))
+        assert result.status == "WARN"
+        assert "max-image-preview" in result.message
+        assert "max-video-preview" in result.message
+
+    def test_passes_when_all_advanced_directives_present(self):
+        html = (
+            '<html><head><meta name="robots" '
+            'content="max-snippet:-1, max-image-preview:large, max-video-preview:-1"></head></html>'
+        )
+        result = robots_meta_directives_check.run(make_check_context(html))
+        assert result.status == "PASS"
