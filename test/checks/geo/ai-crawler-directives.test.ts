@@ -26,6 +26,22 @@ describe("parseAiCrawlerDirectives", () => {
     const result = parseAiCrawlerDirectives(robots);
     expect(result["Google-Extended"]).toBe("disallow");
   });
+
+  it("tracks the search-specific crawlers (OAI-SearchBot, Claude-SearchBot) separately from their training-only counterparts", () => {
+    const robots =
+      "User-agent: GPTBot\nDisallow: /\n\nUser-agent: OAI-SearchBot\nAllow: /\n\nUser-agent: ClaudeBot\nDisallow: /\n\nUser-agent: Claude-SearchBot\nAllow: /\n";
+    const result = parseAiCrawlerDirectives(robots);
+    expect(result["GPTBot"]).toBe("disallow");
+    expect(result["OAI-SearchBot"]).toBe("allow");
+    expect(result["ClaudeBot"]).toBe("disallow");
+    expect(result["Claude-SearchBot"]).toBe("allow");
+  });
+
+  it("tracks Applebot-Extended", () => {
+    const robots = "User-agent: Applebot-Extended\nDisallow: /\n";
+    const result = parseAiCrawlerDirectives(robots);
+    expect(result["Applebot-Extended"]).toBe("disallow");
+  });
 });
 
 describe("aiCrawlerDirectivesCheck", () => {

@@ -6,8 +6,22 @@ const CATEGORY = "geo" as const;
 
 // The AI crawlers checked for are reported on, never prescribed -- whether
 // to allow or disallow any of them is a genuine site-owner choice this tool
-// does not take a position on.
-const TRACKED_BOTS = ["GPTBot", "ClaudeBot", "PerplexityBot", "Google-Extended"];
+// does not take a position on. Training crawlers (GPTBot, ClaudeBot,
+// Google-Extended, Applebot-Extended) and search/retrieval crawlers
+// (OAI-SearchBot, Claude-SearchBot, PerplexityBot) are separate,
+// independently blockable user agents at OpenAI and Anthropic -- a real
+// robots.txt distinction, not a cosmetic one: blocking a training bot has
+// no effect on whether that same company's assistant can still retrieve
+// and cite the page live via its search bot, and vice versa.
+const TRACKED_BOTS = [
+  "GPTBot",
+  "OAI-SearchBot",
+  "ClaudeBot",
+  "Claude-SearchBot",
+  "PerplexityBot",
+  "Google-Extended",
+  "Applebot-Extended",
+];
 
 type Directive = "allow" | "disallow" | "unspecified";
 
@@ -62,7 +76,7 @@ export const aiCrawlerDirectivesCheck: Check = {
         ...base,
         status: "WARN",
         message: "robots.txt is unreachable, so AI-crawler directives could not be determined.",
-        fix: "Add a reachable robots.txt if you want to state an explicit policy for AI crawlers (GPTBot, ClaudeBot, PerplexityBot, Google-Extended).",
+        fix: "Add a reachable robots.txt if you want to state an explicit policy for AI crawlers (GPTBot, OAI-SearchBot, ClaudeBot, Claude-SearchBot, PerplexityBot, Google-Extended, Applebot-Extended).",
       };
     }
 

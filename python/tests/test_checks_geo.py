@@ -79,6 +79,23 @@ class TestAiCrawlerDirectivesCheck:
         directives = parse_ai_crawler_directives("User-agent: SomeOtherBot\nDisallow: /\n", ["GPTBot"])
         assert directives["GPTBot"] == "unspecified"
 
+    def test_tracks_search_specific_crawlers_separately_from_training_only_counterparts(self):
+        robots = (
+            "User-agent: GPTBot\nDisallow: /\n\n"
+            "User-agent: OAI-SearchBot\nAllow: /\n\n"
+            "User-agent: ClaudeBot\nDisallow: /\n\n"
+            "User-agent: Claude-SearchBot\nAllow: /\n"
+        )
+        directives = parse_ai_crawler_directives(robots)
+        assert directives["GPTBot"] == "disallow"
+        assert directives["OAI-SearchBot"] == "allow"
+        assert directives["ClaudeBot"] == "disallow"
+        assert directives["Claude-SearchBot"] == "allow"
+
+    def test_tracks_applebot_extended(self):
+        directives = parse_ai_crawler_directives("User-agent: Applebot-Extended\nDisallow: /\n")
+        assert directives["Applebot-Extended"] == "disallow"
+
 
 class TestFaqSchemaCheck:
     def test_fails_when_homepage_unreachable(self):
