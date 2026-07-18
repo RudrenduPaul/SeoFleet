@@ -27,7 +27,7 @@ import socket
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Callable, List, Optional
 from urllib.parse import urljoin, urlparse
 
 from .errors import SeoFleetError
@@ -36,7 +36,19 @@ MAX_REDIRECTS = 5
 TIMEOUT_SECONDS = 10.0
 MAX_BODY_BYTES = 10 * 1024 * 1024  # 10 MiB
 _READ_CHUNK_BYTES = 64 * 1024
-USER_AGENT = "seofleet-cli (+https://github.com/RudrenduPaul/SeoFleet)"
+
+# Sent on every outbound fetch unless overridden via `safe_fetch`'s
+# `user_agent` argument (or the CLI's `--user-agent` flag, which routes
+# through `with_user_agent`). The previous default -- a static, bot-style
+# UA naming this tool -- gets rejected outright by some SSR frameworks/CDNs
+# that only serve real browsers; a Chrome UA is the safest default for a
+# tool whose whole job is fetching arbitrary sites. Kept identical to the
+# npm CLI's DEFAULT_USER_AGENT (src/fetch-utils.ts) so both CLIs present
+# the same default.
+DEFAULT_USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+)
 
 
 def _is_blocked_host(hostname: str) -> bool:
@@ -156,7 +168,7 @@ class _NoAutoRedirect(urllib.request.HTTPRedirectHandler):
 _opener = urllib.request.build_opener(_NoAutoRedirect)
 
 
-def safe_fetch(raw_url: str, method: str = "GET") -> FetchedResource:
+def safe_fetch(raw_url: str, method: str = "GET", user_agent: str = DEFAULT_USER_AGENT) -> FetchedResource:
     try:
         current = assert_http_url(raw_url)
     except SeoFleetError as err:
@@ -172,7 +184,7 @@ def safe_fetch(raw_url: str, method: str = "GET") -> FetchedResource:
         return list(hops) if hops else None
 
     for _hop in range(MAX_REDIRECTS + 1):
-        request = urllib.request.Request(current, headers={"User-Agent": USER_AGENT}, method=method)
+        request = urllib.request.Request(current, headers={"User-Agent": user_agent}, method=method)
         try:
             with _opener.open(request, timeout=TIMEOUT_SECONDS) as response:
                 status = response.status
@@ -228,3 +240,21 @@ def safe_fetch(raw_url: str, method: str = "GET") -> FetchedResource:
             )
 
     return FetchedResource(url=current, ok=False, error=f"Too many redirects (> {MAX_REDIRECTS})", hops=hops_or_none())
+
+
+def with_user_agent(user_agent: str) -> Callable[..., FetchedResource]:
+    """
+    Builds a fetch callable -- the shape `FetchFn` (see site_resources.py)
+    expects -- that sends `user_agent` on every request instead of
+    DEFAULT_USER_AGENT. This is how the CLI's `--user-agent` override flag
+    reaches safe_fetch without widening the FetchFn signature every caller
+    (including tests' fetch stubs) already depends on. Forwards **kwargs
+    (e.g. `method="HEAD"`, used by image_weight's per-image requests) through
+    to safe_fetch so a check that needs its own additional requests keeps
+    working when the CLI's --user-agent override is active.
+    """
+
+    def _fetch(raw_url: str, **kwargs: object) -> FetchedResource:
+        return safe_fetch(raw_url, user_agent=user_agent, **kwargs)
+
+    return _fetch
