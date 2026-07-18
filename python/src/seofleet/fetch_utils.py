@@ -2,11 +2,16 @@
 Ported from src/fetch-utils.ts.
 
 A fetch wrapper that:
-  - only ever dials http(s) (assert_http_url guards the entry point)
+  - only ever dials http(s) at a non-loopback/private/link-local host
+    (assert_http_url guards the entry point; the same check re-runs on
+    every redirect hop)
   - follows redirects manually, one hop at a time, and refuses to follow a
     redirect whose Location targets a non-http(s) scheme (e.g. file:// or
-    ftp://) -- the SSRF-adjacent trick this guards against
+    ftp://) or a blocked host -- the SSRF-adjacent tricks this guards against
   - bounds the number of hops so a redirect loop can't hang the process
+  - bounds the connection with a timeout (TIMEOUT_SECONDS) and the response
+    body with a byte cap (MAX_BODY_BYTES), so a stalling or oversized
+    response can't hang or exhaust memory on an unattended fleet scan
   - never raises for network-level failure; failures come back as
     FetchedResource(ok=False, error=...) so callers can turn them into check
     results instead of crashing the whole run.
@@ -17,6 +22,7 @@ TypeScript CLI's own zero-dependency design.
 """
 from __future__ import annotations
 
+import ipaddress
 import socket
 import urllib.error
 import urllib.request
@@ -28,7 +34,47 @@ from .errors import SeoFleetError
 
 MAX_REDIRECTS = 5
 TIMEOUT_SECONDS = 10.0
+MAX_BODY_BYTES = 10 * 1024 * 1024  # 10 MiB
+_READ_CHUNK_BYTES = 64 * 1024
 USER_AGENT = "seofleet-cli (+https://github.com/RudrenduPaul/SeoFleet)"
+
+
+def _is_blocked_host(hostname: str) -> bool:
+    """
+    True if `hostname` is an IP literal (or "localhost") in loopback,
+    private, or link-local address space -- the obvious SSRF payloads
+    (http://127.0.0.1, http://169.254.169.254/..., http://192.168.x.x).
+
+    This does NOT resolve DNS names to see where they point: a public
+    hostname that resolves to a private address at connect time (DNS
+    rebinding) isn't caught here. Closing that fully would need a
+    connect-time IP check, which is a larger change than this guard.
+    """
+    host = (hostname or "").lower()
+    if host == "localhost":
+        return True
+    try:
+        ip = ipaddress.ip_address(host)
+    except ValueError:
+        return False
+    return ip.is_loopback or ip.is_private or ip.is_link_local or ip.is_unspecified
+
+
+def _read_capped(response, max_bytes: int) -> bytes:
+    """Reads a urllib response body up to max_bytes, raising instead of
+    buffering an unbounded body -- a stalling or huge response can't OOM
+    an unattended fleet scan."""
+    chunks: list[bytes] = []
+    total = 0
+    while True:
+        chunk = response.read(_READ_CHUNK_BYTES)
+        if not chunk:
+            break
+        total += len(chunk)
+        if total > max_bytes:
+            raise SeoFleetError(f"Response body exceeded {max_bytes}-byte limit", 2)
+        chunks.append(chunk)
+    return b"".join(chunks)
 
 
 @dataclass
@@ -60,6 +106,11 @@ def assert_http_url(raw: str) -> str:
             f'Unsupported URL scheme "{parsed.scheme}:" in "{raw}". Only http and https are allowed.',
             2,
         )
+    if _is_blocked_host(parsed.hostname or ""):
+        raise SeoFleetError(
+            f'Refused to fetch "{raw}": target host is a loopback, private, or link-local address.',
+            2,
+        )
     return raw
 
 
@@ -85,27 +136,40 @@ def safe_fetch(raw_url: str) -> FetchedResource:
         try:
             with _opener.open(request, timeout=TIMEOUT_SECONDS) as response:
                 status = response.status
-                body = response.read().decode("utf-8", errors="replace")
+                try:
+                    body = _read_capped(response, MAX_BODY_BYTES).decode("utf-8", errors="replace")
+                except SeoFleetError as err:
+                    return FetchedResource(url=current, ok=False, status=status, error=str(err))
                 return FetchedResource(url=current, ok=True, status=status, body=body)
         except urllib.error.HTTPError as err:
             status = err.code
             if 300 <= status < 400:
                 location = err.headers.get("Location") if err.headers else None
                 if not location:
-                    body = err.read().decode("utf-8", errors="replace")
+                    body = _read_capped(err, MAX_BODY_BYTES).decode("utf-8", errors="replace")
                     return FetchedResource(url=current, ok=False, status=status, body=body)
                 next_url = urljoin(current, location)
-                next_scheme = urlparse(next_url).scheme
-                if next_scheme not in ("http", "https"):
+                next_parsed = urlparse(next_url)
+                if next_parsed.scheme not in ("http", "https"):
                     return FetchedResource(
                         url=current,
                         ok=False,
                         status=status,
-                        error=f'Refused to follow redirect to non-http(s) scheme "{next_scheme}:"',
+                        error=f'Refused to follow redirect to non-http(s) scheme "{next_parsed.scheme}:"',
+                    )
+                if _is_blocked_host(next_parsed.hostname or ""):
+                    return FetchedResource(
+                        url=current,
+                        ok=False,
+                        status=status,
+                        error="Refused to follow redirect to a loopback, private, or link-local address",
                     )
                 current = next_url
                 continue
-            body_bytes = err.read()
+            try:
+                body_bytes = _read_capped(err, MAX_BODY_BYTES)
+            except SeoFleetError as cap_err:
+                return FetchedResource(url=current, ok=False, status=status, error=str(cap_err))
             body = body_bytes.decode("utf-8", errors="replace") if body_bytes else ""
             return FetchedResource(url=current, ok=False, status=status, body=body)
         except (urllib.error.URLError, socket.timeout, OSError) as err:
