@@ -33,11 +33,13 @@ program
   .command("check")
   .description("Run SEO/GEO checks against a local project's configured site")
   .argument("<path>", "local project directory containing LLMScout.json")
-  .action(async (targetPath: string, _opts: unknown, command: Command) => {
+  .option("--out-dir <dir>", "also write an auto-named report file for this site into this directory")
+  .action(async (targetPath: string, opts: { outDir?: string }, command: Command) => {
     const globalOpts = command.optsWithGlobals<{ json: boolean; userAgent?: string }>();
     const result = await runCheckCommand(targetPath, {
       json: globalOpts.json,
       ...(globalOpts.userAgent !== undefined ? { userAgent: globalOpts.userAgent } : {}),
+      ...(opts.outDir !== undefined ? { outDir: opts.outDir } : {}),
     });
     if (result.stdout) console.log(result.stdout);
     if (result.stderr) console.error(result.stderr);
@@ -48,11 +50,13 @@ program
   .command("fleet")
   .description("Run the full check suite against every site listed in a fleet manifest")
   .argument("<config.json>", "fleet manifest file: { \"sites\": [{ \"name\", \"path\" }] }")
-  .action(async (manifestPath: string, _opts: unknown, command: Command) => {
+  .option("--out-dir <dir>", "also write one auto-named report file per site (named from the manifest's \"name\" field) into this directory")
+  .action(async (manifestPath: string, opts: { outDir?: string }, command: Command) => {
     const globalOpts = command.optsWithGlobals<{ json: boolean; userAgent?: string }>();
     const result = await runFleetCommand(manifestPath, {
       json: globalOpts.json,
       ...(globalOpts.userAgent !== undefined ? { userAgent: globalOpts.userAgent } : {}),
+      ...(opts.outDir !== undefined ? { outDir: opts.outDir } : {}),
     });
     if (result.stdout) console.log(result.stdout);
     if (result.stderr) console.error(result.stderr);

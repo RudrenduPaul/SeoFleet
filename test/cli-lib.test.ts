@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -105,6 +105,38 @@ describe("runCheckCommand", () => {
     const result = await runCheckCommand(dir, { json: true, userAgent: "MyCustomBot/1.0" }, fetchStub);
     expect(result.exitCode).toBe(0);
   });
+
+  it("writes an auto-named report file into --out-dir and notes the path on stderr", async () => {
+    writeFileSync(path.join(dir, "LLMScout.json"), JSON.stringify({ siteUrl: "https://good.example/" }), "utf-8");
+    const fetchStub = makeFetchStub({
+      "https://good.example/": { body: GOOD_HTML },
+      "https://good.example/robots.txt": { body: GOOD_ROBOTS_TXT },
+      "https://good.example/sitemap.xml": { body: GOOD_SITEMAP_XML },
+      "https://good.example/llms.txt": { status: 404, ok: false },
+    });
+    const outDir = path.join(dir, "reports");
+    const result = await runCheckCommand(dir, { json: false, outDir }, fetchStub);
+    expect(result.exitCode).toBe(0);
+
+    const reportFile = path.join(outDir, "good-example.txt");
+    expect(existsSync(reportFile)).toBe(true);
+    expect(readFileSync(reportFile, "utf-8")).toBe(result.stdout);
+    expect(result.stderr).toBe(`Report written to: ${reportFile}`);
+  });
+
+  it("writes a .json report file into --out-dir when json:true, without corrupting stdout JSON", async () => {
+    writeFileSync(path.join(dir, "LLMScout.json"), JSON.stringify({ siteUrl: "https://good.example/" }), "utf-8");
+    const fetchStub = makeFetchStub({
+      "https://good.example/": { body: GOOD_HTML },
+      "https://good.example/robots.txt": { body: GOOD_ROBOTS_TXT },
+      "https://good.example/sitemap.xml": { body: GOOD_SITEMAP_XML },
+      "https://good.example/llms.txt": { status: 404, ok: false },
+    });
+    const outDir = path.join(dir, "reports");
+    const result = await runCheckCommand(dir, { json: true, outDir }, fetchStub);
+    expect(() => JSON.parse(result.stdout ?? "")).not.toThrow();
+    expect(existsSync(path.join(outDir, "good-example.json"))).toBe(true);
+  });
 });
 
 describe("runFleetCommand", () => {
@@ -131,5 +163,26 @@ describe("runFleetCommand", () => {
     expect(result.exitCode).toBe(0);
     const parsed = JSON.parse(result.stdout ?? "");
     expect(parsed.summary.failed).toBe(0);
+  });
+
+  it("writes one per-site report file into --out-dir and notes the count on stderr", async () => {
+    const clientA = path.join(dir, "client-a");
+    writeFileSync(path.join(dir, "fleet.json"), JSON.stringify({ sites: [{ name: "client-a", path: "./client-a" }] }), "utf-8");
+    const fs = await import("node:fs");
+    fs.mkdirSync(clientA, { recursive: true });
+    fs.writeFileSync(path.join(clientA, "LLMScout.json"), JSON.stringify({ siteUrl: "https://good.example/" }), "utf-8");
+
+    const fetchStub = makeFetchStub({
+      "https://good.example/": { body: GOOD_HTML },
+      "https://good.example/robots.txt": { body: GOOD_ROBOTS_TXT },
+      "https://good.example/sitemap.xml": { body: GOOD_SITEMAP_XML },
+      "https://good.example/llms.txt": { status: 404, ok: false },
+    });
+
+    const outDir = path.join(dir, "reports");
+    const result = await runFleetCommand(path.join(dir, "fleet.json"), { json: false, outDir }, fetchStub);
+    expect(result.exitCode).toBe(0);
+    expect(readdirSync(outDir)).toEqual(["client-a.txt"]);
+    expect(result.stderr).toBe(`Wrote 1 report file(s) to: ${outDir}`);
   });
 });

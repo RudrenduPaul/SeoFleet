@@ -1,9 +1,11 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import * as path from "node:path";
 import { LLMScoutError } from "./errors.js";
 import { loadConfig, selectChecks } from "./config.js";
 import { loadSite, type FetchFn } from "./site-resources.js";
 import { runChecks, hasFailure } from "./runner.js";
+import { formatCheckResultsJson, formatCheckResultsText } from "./format.js";
+import { writeReportFile } from "./report-file.js";
 import type { CheckResult } from "./types.js";
 
 export interface FleetManifestEntry {
@@ -84,6 +86,23 @@ export function loadFleetManifest(manifestFile: string): FleetManifest {
   return { sites };
 }
 
+export interface RunFleetOptions {
+  /**
+   * When set, writes one auto-named report file per successfully-checked
+   * site into this directory -- LLMScout's agency/fleet differentiator:
+   * a caller checking many client sites at once gets one file per site
+   * instead of manually shell-redirecting and naming each one. The
+   * filename stem is derived from the manifest entry's own `name` field
+   * (already guaranteed distinct-per-entry by loadFleetManifest), not the
+   * site's URL, since that's the identifier the fleet operator chose.
+   * Sites that error before producing check results (e.g. a missing
+   * LLMScout.json) are not written -- there's nothing to report yet.
+   */
+  outDir?: string;
+  /** Write JSON report files when true, human-readable text otherwise. */
+  json?: boolean;
+}
+
 /**
  * Runs the full check suite against every site in a fleet manifest, local
  * filesystem only -- each entry's `path` is read directly with `loadConfig`
@@ -91,15 +110,43 @@ export function loadFleetManifest(manifestFile: string): FleetManifest {
  * declares. There is no SSH, no remote execution, and no network surface
  * beyond the individual checks' own URL fetches.
  */
-export async function runFleet(manifestFile: string, fetchFn?: FetchFn): Promise<FleetSiteResult[]> {
+export async function runFleet(
+  manifestFile: string,
+  fetchFn?: FetchFn,
+  opts: RunFleetOptions = {},
+): Promise<FleetSiteResult[]> {
   const manifest = loadFleetManifest(manifestFile);
   const results: FleetSiteResult[] = [];
+  const usedStems = new Map<string, number>();
+
+  // Created once, up front, outside the per-site try/catch below -- so a
+  // bad --out-dir (e.g. permission denied) surfaces as one clean top-level
+  // error instead of being swallowed as an identical per-site "error" on
+  // every single manifest entry.
+  if (opts.outDir) {
+    try {
+      mkdirSync(opts.outDir, { recursive: true });
+    } catch (err) {
+      throw new LLMScoutError(
+        `Could not create --out-dir "${opts.outDir}": ${err instanceof Error ? err.message : String(err)}`,
+        2,
+      );
+    }
+  }
 
   for (const site of manifest.sites) {
     try {
       const config = loadConfig(site.path);
       const ctx = await loadSite(config.siteUrl, fetchFn);
       const checkResults = await runChecks(selectChecks(config), ctx);
+
+      if (opts.outDir) {
+        const reportContent = opts.json
+          ? formatCheckResultsJson(config.siteUrl, checkResults)
+          : formatCheckResultsText(config.siteUrl, checkResults);
+        writeReportFile(opts.outDir, site.name, opts.json ?? false, reportContent, usedStems);
+      }
+
       results.push({ name: site.name, path: site.path, ok: !hasFailure(checkResults), results: checkResults });
     } catch (err) {
       results.push({

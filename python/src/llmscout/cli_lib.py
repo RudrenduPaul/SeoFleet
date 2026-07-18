@@ -18,6 +18,7 @@ from .format import (
     format_init_result_text,
 )
 from .init import init_project
+from .report_file import write_report_file
 from .runner import has_failure, run_checks
 from .site_resources import FetchFn, load_site
 
@@ -64,6 +65,7 @@ def run_check_command(
     json_output: bool,
     fetch_fn: Optional[FetchFn] = None,
     user_agent: Optional[str] = None,
+    out_dir: Optional[str] = None,
 ) -> CommandOutput:
     try:
         _require_directory(target_path)
@@ -71,7 +73,13 @@ def run_check_command(
         ctx = load_site(config.site_url, _resolve_fetch_fn(user_agent, fetch_fn))
         results = run_checks(select_checks(config), ctx)
         stdout = format_check_results_json(config.site_url, results) if json_output else format_check_results_text(config.site_url, results)
-        return CommandOutput(exit_code=1 if has_failure(results) else 0, stdout=stdout)
+
+        stderr = None
+        if out_dir:
+            report_file = write_report_file(out_dir, config.site_url, json_output, stdout)
+            stderr = f"Report written to: {report_file}"
+
+        return CommandOutput(exit_code=1 if has_failure(results) else 0, stdout=stdout, stderr=stderr)
     except Exception as err:  # noqa: BLE001
         return _error_output(err)
 
@@ -81,11 +89,18 @@ def run_fleet_command(
     json_output: bool,
     fetch_fn: Optional[FetchFn] = None,
     user_agent: Optional[str] = None,
+    out_dir: Optional[str] = None,
 ) -> CommandOutput:
     try:
-        site_results = run_fleet(manifest_path, _resolve_fetch_fn(user_agent, fetch_fn))
+        site_results = run_fleet(manifest_path, _resolve_fetch_fn(user_agent, fetch_fn), out_dir=out_dir, json_output=json_output)
         stdout = format_fleet_results_json(site_results) if json_output else format_fleet_results_text(site_results)
         any_failure = any(s.error is not None or not s.ok for s in site_results)
-        return CommandOutput(exit_code=1 if any_failure else 0, stdout=stdout)
+
+        stderr = None
+        if out_dir:
+            written = sum(1 for s in site_results if s.error is None)
+            stderr = f"Wrote {written} report file(s) to: {out_dir}"
+
+        return CommandOutput(exit_code=1 if any_failure else 0, stdout=stdout, stderr=stderr)
     except Exception as err:  # noqa: BLE001
         return _error_output(err)
