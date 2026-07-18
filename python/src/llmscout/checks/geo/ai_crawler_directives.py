@@ -11,8 +11,22 @@ _CATEGORY = "geo"
 
 # The AI crawlers checked for are reported on, never prescribed -- whether
 # to allow or disallow any of them is a genuine site-owner choice this tool
-# does not take a position on.
-TRACKED_BOTS = ["GPTBot", "ClaudeBot", "PerplexityBot", "Google-Extended"]
+# does not take a position on. Training crawlers (GPTBot, ClaudeBot,
+# Google-Extended, Applebot-Extended) and search/retrieval crawlers
+# (OAI-SearchBot, Claude-SearchBot, PerplexityBot) are separate,
+# independently blockable user agents at OpenAI and Anthropic -- a real
+# robots.txt distinction, not a cosmetic one: blocking a training bot has
+# no effect on whether that same company's assistant can still retrieve
+# and cite the page live via its search bot, and vice versa.
+TRACKED_BOTS = [
+    "GPTBot",
+    "OAI-SearchBot",
+    "ClaudeBot",
+    "Claude-SearchBot",
+    "PerplexityBot",
+    "Google-Extended",
+    "Applebot-Extended",
+]
 
 
 def parse_ai_crawler_directives(robots_txt: str, bots: List[str] = TRACKED_BOTS) -> Dict[str, str]:
@@ -60,7 +74,7 @@ def _run(ctx: CheckContext) -> CheckResult:
         return CheckResult(
             _ID, _NAME, _CATEGORY, "WARN",
             "robots.txt is unreachable, so AI-crawler directives could not be determined.",
-            "Add a reachable robots.txt if you want to state an explicit policy for AI crawlers (GPTBot, ClaudeBot, PerplexityBot, Google-Extended).",
+            "Add a reachable robots.txt if you want to state an explicit policy for AI crawlers (GPTBot, OAI-SearchBot, ClaudeBot, Claude-SearchBot, PerplexityBot, Google-Extended, Applebot-Extended).",
         )
 
     directives = parse_ai_crawler_directives(robots.body)
