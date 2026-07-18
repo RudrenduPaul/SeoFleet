@@ -118,6 +118,30 @@ class TestSitemapXmlCheck:
         result = sitemap_xml_check.run(ctx)
         assert result.status == "FAIL"
 
+    def test_fails_with_cdn_interception_message_for_html_shaped_body(self):
+        body = "<!doctype html><html><head><title>Attention Required!</title></head><body>Cloudflare</body></html>"
+        ctx = make_check_context(GOOD_HTML, sitemap_xml=FetchedResource(url="x", ok=True, status=200, body=body))
+        result = sitemap_xml_check.run(ctx)
+        assert result.status == "FAIL"
+        assert "CDN" in result.message
+        assert "Cloudflare" in result.message
+        assert "missing <urlset> or <sitemapindex>" not in result.message
+
+    def test_fails_with_cdn_interception_message_for_bare_html_tag_with_leading_whitespace(self):
+        body = "\n  <html><body>Access denied</body></html>"
+        ctx = make_check_context(GOOD_HTML, sitemap_xml=FetchedResource(url="x", ok=True, status=200, body=body))
+        result = sitemap_xml_check.run(ctx)
+        assert result.status == "FAIL"
+        assert "CDN" in result.message
+
+    def test_fails_with_generic_message_when_not_html_shaped(self):
+        body = "<urlst><url><loc>https://acme.example/</loc></url></urlst>"
+        ctx = make_check_context(GOOD_HTML, sitemap_xml=FetchedResource(url="x", ok=True, status=200, body=body))
+        result = sitemap_xml_check.run(ctx)
+        assert result.status == "FAIL"
+        assert "missing <urlset> or <sitemapindex>" in result.message
+        assert "CDN" not in result.message
+
     def test_passes_for_valid_urlset(self):
         body = '<?xml version="1.0"?><urlset><url><loc>https://acme.example/</loc></url></urlset>'
         ctx = make_check_context(GOOD_HTML, sitemap_xml=FetchedResource(url="x", ok=True, status=200, body=body))

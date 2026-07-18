@@ -11,10 +11,22 @@ _NAME = "sitemap.xml"
 _CATEGORY = "technical"
 _URLSET_RE = re.compile(r"<urlset[\s>]", re.IGNORECASE)
 _SITEMAPINDEX_RE = re.compile(r"<sitemapindex[\s>]", re.IGNORECASE)
+_HTML_INTERCEPTION_RE = re.compile(r"^\s*(<!doctype\s+html|<html[\s>])", re.IGNORECASE)
 
 
 def _looks_like_sitemap_xml(body: str) -> bool:
     return bool(_URLSET_RE.search(body) or _SITEMAPINDEX_RE.search(body))
+
+
+def _looks_like_html_interception(body: str) -> bool:
+    """True when a reachable-but-invalid body is HTML-shaped rather than
+    malformed XML -- the telltale sign of a CDN/edge/bot-management layer
+    (e.g. Cloudflare) intercepting the request and returning a challenge or
+    error page instead of the real sitemap. Only checks the leading,
+    possibly whitespace-padded, start of the body so a genuine sitemap that
+    merely mentions "html" somewhere in a <loc> URL is never misclassified.
+    """
+    return bool(_HTML_INTERCEPTION_RE.search(body))
 
 
 def _run(ctx: CheckContext) -> CheckResult:
@@ -33,6 +45,15 @@ def _run(ctx: CheckContext) -> CheckResult:
 
     reachable_but_invalid = next((c for c in candidates if c.ok), None)
     if reachable_but_invalid is not None:
+        if _looks_like_html_interception(reachable_but_invalid.body or ""):
+            return CheckResult(
+                _ID, _NAME, _CATEGORY, "FAIL",
+                f"A sitemap request to {reachable_but_invalid.url} returned an HTML page instead of sitemap XML "
+                "-- this usually means a CDN, edge, or bot-management layer (e.g. Cloudflare) is intercepting "
+                "the request with a challenge or error page rather than serving the real sitemap.",
+                "Check your CDN/edge/bot-management configuration (e.g. Cloudflare's bot fight mode or WAF "
+                "rules) to allow sitemap.xml requests through to the origin.",
+            )
         return CheckResult(
             _ID, _NAME, _CATEGORY, "FAIL",
             f"A sitemap is reachable at {reachable_but_invalid.url} but does not look like valid sitemap XML "
