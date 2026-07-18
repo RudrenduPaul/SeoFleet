@@ -6,6 +6,7 @@ import { loadSite, type FetchFn } from "./site-resources.js";
 import { withUserAgent } from "./fetch-utils.js";
 import { runChecks, hasFailure } from "./runner.js";
 import { runFleet } from "./fleet.js";
+import { writeReportFile } from "./report-file.js";
 import {
   formatCheckResultsJson,
   formatCheckResultsText,
@@ -57,7 +58,7 @@ export function runInitCommand(targetPath: string, opts: { siteUrl?: string; jso
 
 export async function runCheckCommand(
   targetPath: string,
-  opts: { json: boolean; userAgent?: string },
+  opts: { json: boolean; userAgent?: string; outDir?: string },
   fetchFn?: FetchFn,
 ): Promise<CommandOutput> {
   try {
@@ -68,7 +69,14 @@ export async function runCheckCommand(
     const stdout = opts.json
       ? formatCheckResultsJson(config.siteUrl, results)
       : formatCheckResultsText(config.siteUrl, results);
-    return { exitCode: hasFailure(results) ? 1 : 0, stdout };
+
+    let stderr: string | undefined;
+    if (opts.outDir) {
+      const reportFile = writeReportFile(opts.outDir, config.siteUrl, opts.json, stdout);
+      stderr = `Report written to: ${reportFile}`;
+    }
+
+    return { exitCode: hasFailure(results) ? 1 : 0, stdout, ...(stderr !== undefined ? { stderr } : {}) };
   } catch (err) {
     return errorOutput(err);
   }
@@ -76,14 +84,24 @@ export async function runCheckCommand(
 
 export async function runFleetCommand(
   manifestPath: string,
-  opts: { json: boolean; userAgent?: string },
+  opts: { json: boolean; userAgent?: string; outDir?: string },
   fetchFn?: FetchFn,
 ): Promise<CommandOutput> {
   try {
-    const siteResults = await runFleet(manifestPath, resolveFetchFn(opts.userAgent, fetchFn));
+    const siteResults = await runFleet(manifestPath, resolveFetchFn(opts.userAgent, fetchFn), {
+      ...(opts.outDir !== undefined ? { outDir: opts.outDir } : {}),
+      json: opts.json,
+    });
     const stdout = opts.json ? formatFleetResultsJson(siteResults) : formatFleetResultsText(siteResults);
     const anyFailure = siteResults.some((s) => s.error !== undefined || !s.ok);
-    return { exitCode: anyFailure ? 1 : 0, stdout };
+
+    let stderr: string | undefined;
+    if (opts.outDir) {
+      const written = siteResults.filter((s) => s.error === undefined).length;
+      stderr = `Wrote ${written} report file(s) to: ${opts.outDir}`;
+    }
+
+    return { exitCode: anyFailure ? 1 : 0, stdout, ...(stderr !== undefined ? { stderr } : {}) };
   } catch (err) {
     return errorOutput(err);
   }
