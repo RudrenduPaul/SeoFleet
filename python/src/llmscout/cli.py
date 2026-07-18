@@ -65,6 +65,19 @@ def run_cli(argv: List[str]) -> int:
     the real arguments start at argv[1]. Returns the process exit code
     (0 clean / 1 check-fail / 2 usage-config error).
     """
+    # Windows' console defaults stdout/stderr to the legacy cp1252 codepage,
+    # so any fetched page title/meta-description containing a character
+    # outside that codepage raises UnicodeEncodeError and crashes the CLI.
+    # Reconfigure to UTF-8 before any output is written, matching the
+    # guarantee Node's always-UTF-8 console.log already gives the npm/TS
+    # CLI. Guarded by hasattr() since reconfigure() (Python 3.7+ streams)
+    # may be unavailable if stdout/stderr have been replaced (e.g. in tests).
+    if sys.platform == "win32":
+        if hasattr(sys.stdout, "reconfigure"):
+            sys.stdout.reconfigure(encoding="utf-8")
+        if hasattr(sys.stderr, "reconfigure"):
+            sys.stderr.reconfigure(encoding="utf-8")
+
     parser = build_parser()
     args = parser.parse_args(argv[1:])
 

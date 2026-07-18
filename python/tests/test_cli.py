@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import json
+import sys
+from unittest.mock import patch
 
 from LLMScout.cli import run_cli
 from LLMScout.cli_lib import run_check_command, run_fleet_command, run_init_command
@@ -63,3 +65,43 @@ def test_run_cli_init_writes_scaffold(tmp_path, capsys):
     assert exit_code == 0
     captured = capsys.readouterr()
     assert "Created" in captured.out
+
+
+def test_run_cli_reconfigures_stdout_and_stderr_to_utf8_on_win32(tmp_path):
+    # Regression test: on Windows, stdout/stderr default to the legacy
+    # cp1252 codepage, so a fetched page title/meta-description containing
+    # a character outside cp1252 raises UnicodeEncodeError and crashes the
+    # CLI before any output is written. run_cli must reconfigure both
+    # streams to UTF-8 up front whenever sys.platform == "win32".
+    with patch.object(sys, "platform", "win32"), \
+            patch.object(sys, "stdout") as mock_stdout, \
+            patch.object(sys, "stderr") as mock_stderr:
+        run_cli(["LLMScout"])
+
+    mock_stdout.reconfigure.assert_called_once_with(encoding="utf-8")
+    mock_stderr.reconfigure.assert_called_once_with(encoding="utf-8")
+
+
+def test_run_cli_does_not_reconfigure_streams_on_non_windows(tmp_path):
+    with patch.object(sys, "platform", "linux"), \
+            patch.object(sys, "stdout") as mock_stdout, \
+            patch.object(sys, "stderr") as mock_stderr:
+        run_cli(["LLMScout"])
+
+    mock_stdout.reconfigure.assert_not_called()
+    mock_stderr.reconfigure.assert_not_called()
+
+
+def test_run_cli_tolerates_streams_without_reconfigure_on_win32(tmp_path):
+    # Some stream replacements (e.g. certain test/CI harnesses) don't
+    # expose reconfigure(). run_cli must not crash in that case.
+    class _StreamNoReconfigure:
+        def write(self, _text: str) -> int:
+            return 0
+
+    with patch.object(sys, "platform", "win32"), \
+            patch.object(sys, "stdout", _StreamNoReconfigure()), \
+            patch.object(sys, "stderr", _StreamNoReconfigure()):
+        exit_code = run_cli(["LLMScout"])
+
+    assert exit_code == 0
