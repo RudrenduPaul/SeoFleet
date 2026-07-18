@@ -1,6 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { redirectChainCheck } from "../../../src/checks/technical/redirect-chain.js";
+import { safeFetch } from "../../../src/fetch-utils.js";
 import type { CheckContext, SiteResources } from "../../../src/types.js";
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 function ctxWithHomepage(homepage: SiteResources["homepage"]): CheckContext {
   const siteUrl = new URL("https://acme.example/");
@@ -57,29 +62,38 @@ describe("redirectChainCheck", () => {
     expect(result.message).toMatch(/3 redirect hops/);
   });
 
-  it("FAILs when an intermediate hop returned a 4xx/5xx status", () => {
-    const result = redirectChainCheck.run(
-      ctxWithHomepage({
-        url: "https://acme.example/",
-        ok: false,
-        status: 500,
-        error: "boom",
-        hops: [{ url: "https://acme.example/", status: 500 }],
-      }),
-    );
+  it("FAILs when a redirect chain dead-ends in a terminal error status", async () => {
+    // Real safeFetch output: a hop entry only ever comes from safeFetch's
+    // own 3xx redirect branch, so an error can never appear as a hops[]
+    // entry -- it always lands on the final FetchedResource's own
+    // status/ok instead. Drive the real fetch wrapper through a 301 that
+    // dead-ends in a 404 so the test exercises a shape safeFetch can
+    // actually produce, rather than a hand-built hops array it never would.
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(null, { status: 301, headers: { location: "https://acme.example/gone" } }))
+      .mockResolvedValueOnce(new Response("not found", { status: 404 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const homepage = await safeFetch("https://acme.example/");
+    expect(homepage.ok).toBe(false);
+    expect(homepage.status).toBe(404);
+    expect(homepage.hops).toEqual([{ url: "https://acme.example/", status: 301 }]);
+
+    const result = redirectChainCheck.run(ctxWithHomepage(homepage));
     expect(result.status).toBe("FAIL");
-    expect(result.message).toMatch(/HTTP 500/);
+    expect(result.message).toMatch(/HTTP 404/);
   });
 
-  it("FAILs even for a short chain if one hop errored", () => {
-    const result = redirectChainCheck.run(
-      ctxWithHomepage({
-        url: "https://acme.example/",
-        ok: false,
-        status: 404,
-        hops: [{ url: "https://acme.example/old", status: 404 }],
-      }),
-    );
+  it("FAILs even for a single redirect if the chain dead-ends in an error", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(null, { status: 302, headers: { location: "https://acme.example/old" } }))
+      .mockResolvedValueOnce(new Response("server error", { status: 500 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const homepage = await safeFetch("https://acme.example/");
+    const result = redirectChainCheck.run(ctxWithHomepage(homepage));
     expect(result.status).toBe("FAIL");
   });
 });

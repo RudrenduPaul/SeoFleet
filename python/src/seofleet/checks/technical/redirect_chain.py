@@ -13,7 +13,8 @@ _WARN_HOP_THRESHOLD = 2
 
 
 def _run(ctx: CheckContext) -> CheckResult:
-    hops = ctx.resources.homepage.hops
+    homepage = ctx.resources.homepage
+    hops = homepage.hops
 
     if not hops:
         return CheckResult(_ID, _NAME, _CATEGORY, "PASS", "The homepage resolved with no redirects.")
@@ -28,7 +29,20 @@ def _run(ctx: CheckContext) -> CheckResult:
         )
 
     chain = " -> ".join(f"{h.url} ({h.status})" for h in hops)
-    final_url = ctx.resources.homepage.url
+    final_url = homepage.url
+
+    # A hop entry is only ever appended inside safe_fetch's own 3xx redirect
+    # branch, so by construction every entry in `hops` is a 3xx status --
+    # the error_hops filter above can never match real fetch output. When
+    # the chain dead-ends in a 4xx/5xx, that status lands on the terminal
+    # resource itself (its own status/ok), not as a hops entry, so it has
+    # to be checked here instead.
+    if not homepage.ok and homepage.status is not None and 400 <= homepage.status < 600:
+        return CheckResult(
+            _ID, _NAME, _CATEGORY, "FAIL",
+            f"The homepage's redirect chain leads to an error status: {chain} -> {final_url} (HTTP {homepage.status}).",
+            "Fix or remove the broken hop so the redirect chain leads cleanly to the final page.",
+        )
 
     if len(hops) > _WARN_HOP_THRESHOLD:
         return CheckResult(
