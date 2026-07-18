@@ -6,6 +6,7 @@ Runs 21 technical-SEO and GEO (generative-engine-optimization) checks against yo
 
 [![CI](https://github.com/RudrenduPaul/SeoFleet/actions/workflows/ci.yml/badge.svg)](https://github.com/RudrenduPaul/SeoFleet/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/seofleet-cli.svg)](https://www.npmjs.com/package/seofleet-cli)
+[![PyPI version](https://img.shields.io/pypi/v/seofleet-cli.svg)](https://pypi.org/project/seofleet-cli/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 
 </div>
