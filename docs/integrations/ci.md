@@ -8,6 +8,8 @@ whichever matches your pipeline's existing toolchain.
 
 ## GitHub Actions -- Python CLI
 
+Published on PyPI as [`LLMScout-cli`](https://pypi.org/project/LLMScout-cli/).
+
 ```yaml
 name: LLMScout check
 on: [pull_request]
@@ -40,6 +42,8 @@ output.
 
 ## GitHub Actions -- npm CLI
 
+Published on npm as [`LLMScout-cli`](https://www.npmjs.com/package/LLMScout-cli).
+
 ```yaml
 name: LLMScout check
 on: [pull_request]
@@ -55,10 +59,6 @@ jobs:
       - run: npm install --save-dev LLMScout-cli
       - run: npx LLMScout check . --json > LLMScout-results.json
 ```
-
-(The npm package is currently blocked on a transient npm-registry rate
-limit -- see the [project README](../../README.md) for status. Once
-published, this step works exactly as written.)
 
 ## Pre-commit hook (Python CLI)
 
