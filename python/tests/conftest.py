@@ -11,7 +11,7 @@ from typing import Callable, Dict, Optional
 
 from seofleet.fetch_utils import FetchedResource
 from seofleet.html_util import parse_html
-from seofleet.types import CheckContext, SiteResources
+from seofleet.types import CheckContext, FetchFn, SiteResources
 
 GOOD_HTML = """<!doctype html>
 <html>
@@ -65,11 +65,14 @@ GOOD_SITEMAP_XML = """<?xml version="1.0" encoding="UTF-8"?>
 </urlset>"""
 
 
-def make_fetch_stub(routes: Dict[str, Dict[str, object]]) -> Callable[[str], FetchedResource]:
+def make_fetch_stub(routes: Dict[str, Dict[str, object]]) -> FetchFn:
     """Builds a fetch function stub keyed by exact URL. No real network
-    calls happen when this is passed as `fetch_fn`."""
+    calls happen when this is passed as `fetch_fn`. Accepts (and ignores)
+    a `method` kwarg so the same stub also serves image_weight's HEAD
+    requests, made through the same fetch_fn as the four shared site
+    resources."""
 
-    def _stub(url: str) -> FetchedResource:
+    def _stub(url: str, method: str = "GET") -> FetchedResource:  # noqa: ARG001 - method intentionally unused
         route = routes.get(url)
         if route is None:
             return FetchedResource(url=url, ok=False, status=404, error="not stubbed")
@@ -81,9 +84,18 @@ def make_fetch_stub(routes: Dict[str, Dict[str, object]]) -> Callable[[str], Fet
             status=status,
             body=route.get("body"),
             error=route.get("error"),
+            content_length=route.get("content_length"),
         )
 
     return _stub
+
+
+def _not_stubbed(url: str, *args, **kwargs) -> FetchedResource:
+    """Default fetch_fn for a CheckContext -- matches make_fetch_stub's own
+    behavior for a URL nobody stubbed, so a test that doesn't care about a
+    check's own additional fetches (e.g. image_weight's HEAD requests)
+    still makes zero real network calls."""
+    return FetchedResource(url=url, ok=False, status=404, error="not stubbed")
 
 
 def make_check_context(
@@ -92,11 +104,14 @@ def make_check_context(
     sitemap_xml: Optional[FetchedResource] = None,
     llms_txt: Optional[FetchedResource] = None,
     site_url: str = "https://acme.example/",
+    fetch_fn: FetchFn = _not_stubbed,
 ) -> CheckContext:
     """
     Builds a full CheckContext for a single check test: `html=None` models
     an unreachable homepage (every DOM-dependent check should FAIL in that
     case), otherwise the HTML is parsed exactly as the real runner would.
+    `fetch_fn` lets a test stub the additional requests a check like
+    image_weight makes beyond the four shared site resources.
     """
     homepage = (
         FetchedResource(url=site_url, ok=True, status=200, body=html)
@@ -110,4 +125,6 @@ def make_check_context(
         sitemap_xml=sitemap_xml or FetchedResource(url=site_url.rstrip("/") + "/sitemap.xml", ok=False, status=404),
         llms_txt=llms_txt or FetchedResource(url=site_url.rstrip("/") + "/llms.txt", ok=False, status=404),
     )
-    return CheckContext(resources=resources, root=parse_html(html) if html is not None else None)
+    return CheckContext(
+        resources=resources, root=parse_html(html) if html is not None else None, fetch_fn=fetch_fn
+    )

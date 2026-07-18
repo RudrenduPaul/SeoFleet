@@ -11,6 +11,7 @@ const dummyCtx: CheckContext = {
     llmsTxt: { url: "https://example.com/llms.txt", ok: false },
   },
   $: null,
+  fetchFn: async (url: string) => ({ url, ok: false, status: 404, error: "not stubbed" }),
 };
 
 describe("runChecks", () => {

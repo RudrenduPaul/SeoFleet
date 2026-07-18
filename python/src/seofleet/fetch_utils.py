@@ -27,7 +27,7 @@ import socket
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
-from typing import Optional
+from typing import List, Optional
 from urllib.parse import urljoin, urlparse
 
 from .errors import SeoFleetError
@@ -60,6 +60,18 @@ def _is_blocked_host(hostname: str) -> bool:
     return ip.is_loopback or ip.is_private or ip.is_link_local or ip.is_unspecified
 
 
+def _parse_content_length(value: Optional[str]) -> Optional[int]:
+    """Parses a Content-Length header value into a non-negative byte count,
+    or None if the header is absent, non-numeric, or negative."""
+    if not value:
+        return None
+    try:
+        n = int(value)
+    except ValueError:
+        return None
+    return n if n >= 0 else None
+
+
 def _read_capped(response, max_bytes: int) -> bytes:
     """Reads a urllib response body up to max_bytes, raising instead of
     buffering an unbounded body -- a stalling or huge response can't OOM
@@ -78,6 +90,15 @@ def _read_capped(response, max_bytes: int) -> bytes:
 
 
 @dataclass
+class Hop:
+    """One redirect hop safe_fetch followed on the way to a resource's
+    final url/status."""
+
+    url: str
+    status: int
+
+
+@dataclass
 class FetchedResource:
     """The result of fetching a single resource (a page, robots.txt,
     sitemap.xml, llms.txt). Never raises for ordinary network failure --
@@ -89,6 +110,16 @@ class FetchedResource:
     status: Optional[int] = None
     body: Optional[str] = None
     error: Optional[str] = None
+    # The response's Content-Length header, in bytes, when present and a
+    # valid non-negative integer.
+    content_length: Optional[int] = None
+    # Every redirect hop safe_fetch followed to reach the final url/status
+    # above, in the order visited. None when the resource resolved with
+    # zero redirects, or the request failed before any hop was recorded.
+    # This is data safe_fetch already computes for its own control flow
+    # and previously discarded once each hop's status had been used to
+    # decide whether to keep following the chain.
+    hops: Optional[List[Hop]] = None
 
 
 def assert_http_url(raw: str) -> str:
@@ -125,29 +156,41 @@ class _NoAutoRedirect(urllib.request.HTTPRedirectHandler):
 _opener = urllib.request.build_opener(_NoAutoRedirect)
 
 
-def safe_fetch(raw_url: str) -> FetchedResource:
+def safe_fetch(raw_url: str, method: str = "GET") -> FetchedResource:
     try:
         current = assert_http_url(raw_url)
     except SeoFleetError as err:
         return FetchedResource(url=raw_url, ok=False, error=str(err))
 
+    # Every redirect hop actually followed, in visit order -- previously
+    # discarded once its status had been used to decide whether to keep
+    # following the chain; now threaded through onto the final result so
+    # callers (e.g. the redirect-chain check) can see the whole path.
+    hops: List[Hop] = []
+
+    def hops_or_none() -> Optional[List[Hop]]:
+        return list(hops) if hops else None
+
     for _hop in range(MAX_REDIRECTS + 1):
-        request = urllib.request.Request(current, headers={"User-Agent": USER_AGENT})
+        request = urllib.request.Request(current, headers={"User-Agent": USER_AGENT}, method=method)
         try:
             with _opener.open(request, timeout=TIMEOUT_SECONDS) as response:
                 status = response.status
+                content_length = _parse_content_length(response.headers.get("Content-Length"))
                 try:
                     body = _read_capped(response, MAX_BODY_BYTES).decode("utf-8", errors="replace")
                 except SeoFleetError as err:
-                    return FetchedResource(url=current, ok=False, status=status, error=str(err))
-                return FetchedResource(url=current, ok=True, status=status, body=body)
+                    return FetchedResource(url=current, ok=False, status=status, error=str(err), hops=hops_or_none())
+                return FetchedResource(
+                    url=current, ok=True, status=status, body=body, content_length=content_length, hops=hops_or_none()
+                )
         except urllib.error.HTTPError as err:
             status = err.code
             if 300 <= status < 400:
                 location = err.headers.get("Location") if err.headers else None
                 if not location:
                     body = _read_capped(err, MAX_BODY_BYTES).decode("utf-8", errors="replace")
-                    return FetchedResource(url=current, ok=False, status=status, body=body)
+                    return FetchedResource(url=current, ok=False, status=status, body=body, hops=hops_or_none())
                 next_url = urljoin(current, location)
                 next_parsed = urlparse(next_url)
                 if next_parsed.scheme not in ("http", "https"):
@@ -156,6 +199,7 @@ def safe_fetch(raw_url: str) -> FetchedResource:
                         ok=False,
                         status=status,
                         error=f'Refused to follow redirect to non-http(s) scheme "{next_parsed.scheme}:"',
+                        hops=hops_or_none(),
                     )
                 if _is_blocked_host(next_parsed.hostname or ""):
                     return FetchedResource(
@@ -163,17 +207,24 @@ def safe_fetch(raw_url: str) -> FetchedResource:
                         ok=False,
                         status=status,
                         error="Refused to follow redirect to a loopback, private, or link-local address",
+                        hops=hops_or_none(),
                     )
+                hops.append(Hop(url=current, status=status))
                 current = next_url
                 continue
+            content_length = _parse_content_length(err.headers.get("Content-Length") if err.headers else None)
             try:
                 body_bytes = _read_capped(err, MAX_BODY_BYTES)
             except SeoFleetError as cap_err:
-                return FetchedResource(url=current, ok=False, status=status, error=str(cap_err))
+                return FetchedResource(url=current, ok=False, status=status, error=str(cap_err), hops=hops_or_none())
             body = body_bytes.decode("utf-8", errors="replace") if body_bytes else ""
-            return FetchedResource(url=current, ok=False, status=status, body=body)
+            return FetchedResource(
+                url=current, ok=False, status=status, body=body, content_length=content_length, hops=hops_or_none()
+            )
         except (urllib.error.URLError, socket.timeout, OSError) as err:
             reason = getattr(err, "reason", None)
-            return FetchedResource(url=current, ok=False, error=str(reason) if reason else str(err))
+            return FetchedResource(
+                url=current, ok=False, error=str(reason) if reason else str(err), hops=hops_or_none()
+            )
 
-    return FetchedResource(url=current, ok=False, error=f"Too many redirects (> {MAX_REDIRECTS})")
+    return FetchedResource(url=current, ok=False, error=f"Too many redirects (> {MAX_REDIRECTS})", hops=hops_or_none())

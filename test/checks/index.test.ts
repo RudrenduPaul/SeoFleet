@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { ALL_CHECKS, GEO_CHECKS, TECHNICAL_CHECKS } from "../../src/checks/index.js";
 
 describe("check registry", () => {
-  it("has at least 12 checks across the two categories", () => {
-    expect(ALL_CHECKS.length).toBeGreaterThanOrEqual(12);
+  it("has at least 14 checks across the two categories", () => {
+    expect(ALL_CHECKS.length).toBeGreaterThanOrEqual(14);
     expect(ALL_CHECKS.length).toBe(TECHNICAL_CHECKS.length + GEO_CHECKS.length);
   });
 
