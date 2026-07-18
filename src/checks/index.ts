@@ -6,11 +6,16 @@ import { robotsTxtCheck } from "./technical/robots-txt.js";
 import { sitemapXmlCheck } from "./technical/sitemap-xml.js";
 import { headingStructureCheck } from "./technical/heading-structure.js";
 import { imageAltCheck } from "./technical/image-alt.js";
+import { openGraphCheck } from "./technical/open-graph.js";
+import { twitterCardCheck } from "./technical/twitter-card.js";
+import { robotsMetaDirectivesCheck } from "./technical/robots-meta-directives.js";
 import { structuredDataCheck } from "./geo/structured-data.js";
 import { llmsTxtCheck } from "./geo/llms-txt.js";
 import { aiCrawlerDirectivesCheck } from "./geo/ai-crawler-directives.js";
 import { faqSchemaCheck } from "./geo/faq-schema.js";
 import { contentExtractionCheck } from "./geo/content-extraction.js";
+import { speakableSchemaCheck } from "./geo/speakable-schema.js";
+import { organizationSchemaCheck } from "./geo/organization-schema.js";
 
 export const TECHNICAL_CHECKS: Check[] = [
   titleCheck,
@@ -20,6 +25,9 @@ export const TECHNICAL_CHECKS: Check[] = [
   sitemapXmlCheck,
   headingStructureCheck,
   imageAltCheck,
+  openGraphCheck,
+  twitterCardCheck,
+  robotsMetaDirectivesCheck,
 ];
 
 export const GEO_CHECKS: Check[] = [
@@ -28,6 +36,8 @@ export const GEO_CHECKS: Check[] = [
   aiCrawlerDirectivesCheck,
   faqSchemaCheck,
   contentExtractionCheck,
+  speakableSchemaCheck,
+  organizationSchemaCheck,
 ];
 
 export const ALL_CHECKS: Check[] = [...TECHNICAL_CHECKS, ...GEO_CHECKS];
@@ -40,9 +50,14 @@ export {
   sitemapXmlCheck,
   headingStructureCheck,
   imageAltCheck,
+  openGraphCheck,
+  twitterCardCheck,
+  robotsMetaDirectivesCheck,
   structuredDataCheck,
   llmsTxtCheck,
   aiCrawlerDirectivesCheck,
   faqSchemaCheck,
   contentExtractionCheck,
+  speakableSchemaCheck,
+  organizationSchemaCheck,
 };

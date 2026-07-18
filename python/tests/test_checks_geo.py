@@ -8,6 +8,8 @@ from LLMScout.checks.geo.ai_crawler_directives import (
 from LLMScout.checks.geo.content_extraction import content_extraction_check
 from LLMScout.checks.geo.faq_schema import faq_schema_check
 from LLMScout.checks.geo.llms_txt import llms_txt_check
+from LLMScout.checks.geo.organization_schema import organization_schema_check
+from LLMScout.checks.geo.speakable_schema import speakable_schema_check
 from LLMScout.checks.geo.structured_data import structured_data_check
 from LLMScout.fetch_utils import FetchedResource
 
@@ -114,4 +116,102 @@ class TestContentExtractionCheck:
 
     def test_passes_for_well_structured_content(self):
         result = content_extraction_check.run(make_check_context(GOOD_HTML))
+        assert result.status == "PASS"
+
+
+class TestSpeakableSchemaCheck:
+    def test_fails_when_homepage_unreachable(self):
+        result = speakable_schema_check.run(make_check_context(None))
+        assert result.status == "FAIL"
+
+    def test_warns_when_no_speakable_schema(self):
+        result = speakable_schema_check.run(make_check_context("<html><head></head></html>"))
+        assert result.status == "WARN"
+
+    def test_ignores_malformed_json_ld(self):
+        html = '<html><head><script type="application/ld+json">{not json</script></head></html>'
+        result = speakable_schema_check.run(make_check_context(html))
+        assert result.status == "WARN"
+
+    def test_passes_when_speakable_type_present_directly(self):
+        html = (
+            '<html><head><script type="application/ld+json">'
+            '{"@type":"SpeakableSpecification","cssSelector":["h1",".summary"]}'
+            "</script></head></html>"
+        )
+        result = speakable_schema_check.run(make_check_context(html))
+        assert result.status == "PASS"
+
+    def test_passes_when_speakable_nested_on_webpage(self):
+        html = (
+            '<html><head><script type="application/ld+json">'
+            '{"@context":"https://schema.org","@type":"WebPage",'
+            '"speakable":{"@type":"SpeakableSpecification","cssSelector":["h1"]}}'
+            "</script></head></html>"
+        )
+        result = speakable_schema_check.run(make_check_context(html))
+        assert result.status == "PASS"
+
+    def test_passes_when_nested_in_graph(self):
+        html = (
+            '<html><head><script type="application/ld+json">'
+            '{"@graph":[{"@type":"Organization"},{"@type":"SpeakableSpecification","cssSelector":["h1"]}]}'
+            "</script></head></html>"
+        )
+        result = speakable_schema_check.run(make_check_context(html))
+        assert result.status == "PASS"
+
+
+class TestOrganizationSchemaCheck:
+    def test_fails_when_homepage_unreachable(self):
+        result = organization_schema_check.run(make_check_context(None))
+        assert result.status == "FAIL"
+
+    def test_warns_when_no_organization_schema(self):
+        result = organization_schema_check.run(make_check_context("<html><head></head></html>"))
+        assert result.status == "WARN"
+        assert "No Organization" in result.message
+
+    def test_ignores_malformed_json_ld(self):
+        html = '<html><head><script type="application/ld+json">{not json</script></head></html>'
+        result = organization_schema_check.run(make_check_context(html))
+        assert result.status == "WARN"
+
+    def test_warns_when_organization_present_without_same_as(self):
+        html = (
+            '<html><head><script type="application/ld+json">'
+            '{"@type":"Organization","name":"Acme Widgets"}'
+            "</script></head></html>"
+        )
+        result = organization_schema_check.run(make_check_context(html))
+        assert result.status == "WARN"
+        assert "sameAs" in result.message
+
+    def test_warns_when_same_as_is_empty_array(self):
+        html = (
+            '<html><head><script type="application/ld+json">'
+            '{"@type":"Organization","name":"Acme","sameAs":[]}'
+            "</script></head></html>"
+        )
+        result = organization_schema_check.run(make_check_context(html))
+        assert result.status == "WARN"
+
+    def test_passes_when_organization_has_same_as(self):
+        html = (
+            '<html><head><script type="application/ld+json">'
+            '{"@type":"Organization","name":"Acme Widgets",'
+            '"sameAs":["https://twitter.com/acme","https://linkedin.com/company/acme"]}'
+            "</script></head></html>"
+        )
+        result = organization_schema_check.run(make_check_context(html))
+        assert result.status == "PASS"
+
+    def test_passes_for_person_nested_in_graph(self):
+        html = (
+            '<html><head><script type="application/ld+json">'
+            '{"@graph":[{"@type":"WebSite"},'
+            '{"@type":"Person","name":"Jane Doe","sameAs":["https://twitter.com/janedoe"]}]}'
+            "</script></head></html>"
+        )
+        result = organization_schema_check.run(make_check_context(html))
         assert result.status == "PASS"

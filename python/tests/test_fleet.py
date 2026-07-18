@@ -65,4 +65,4 @@ def test_run_fleet_runs_checks_for_valid_site(tmp_path):
 
     assert len(results) == 1
     assert results[0].error is None
-    assert len(results[0].results) == 12
+    assert len(results[0].results) == 17
