@@ -8,13 +8,15 @@ from __future__ import annotations
 from LLMScout.checks.technical.canonical import canonical_check
 from LLMScout.checks.technical.heading_structure import heading_structure_check
 from LLMScout.checks.technical.image_alt import image_alt_check
+from LLMScout.checks.technical.image_weight import image_weight_check
 from LLMScout.checks.technical.meta_description import meta_description_check
+from LLMScout.checks.technical.redirect_chain import redirect_chain_check
 from LLMScout.checks.technical.robots_txt import robots_txt_check
 from LLMScout.checks.technical.sitemap_xml import sitemap_xml_check
 from LLMScout.checks.technical.title import title_check
-from LLMScout.fetch_utils import FetchedResource
+from LLMScout.fetch_utils import FetchedResource, Hop
 
-from .conftest import GOOD_HTML, make_check_context
+from .conftest import GOOD_HTML, make_check_context, make_fetch_stub
 
 
 class TestTitleCheck:
@@ -172,3 +174,126 @@ class TestImageAltCheck:
         html = '<html><body><img src="a.png"><img src="b.png"></body></html>'
         result = image_alt_check.run(make_check_context(html))
         assert result.status == "FAIL"
+
+
+class TestImageWeightCheck:
+    def test_fails_when_homepage_unreachable(self):
+        result = image_weight_check.run(make_check_context(None))
+        assert result.status == "FAIL"
+
+    def test_passes_when_no_images(self):
+        result = image_weight_check.run(make_check_context("<html><body><p>No images</p></body></html>"))
+        assert result.status == "PASS"
+
+    def test_passes_when_no_src_is_http_s(self):
+        html = '<html><body><img src="data:image/png;base64,AAAA"></body></html>'
+        result = image_weight_check.run(make_check_context(html))
+        assert result.status == "PASS"
+        assert "http(s)" in result.message
+
+    def test_passes_and_does_not_flag_when_size_cannot_be_determined(self):
+        html = '<html><body><img src="/a.png"></body></html>'
+        fetch_fn = make_fetch_stub({})  # nothing stubbed -> every HEAD comes back 404
+        result = image_weight_check.run(make_check_context(html, fetch_fn=fetch_fn))
+        assert result.status == "PASS"
+        assert "Could not determine file size" in result.message
+
+    def test_passes_when_every_measured_image_is_under_warn_threshold(self):
+        html = '<html><body><img src="/a.png"><img src="/b.png"></body></html>'
+        fetch_fn = make_fetch_stub(
+            {
+                "https://acme.example/a.png": {"content_length": 50 * 1024},
+                "https://acme.example/b.png": {"content_length": 100 * 1024},
+            }
+        )
+        result = image_weight_check.run(make_check_context(html, fetch_fn=fetch_fn))
+        assert result.status == "PASS"
+        assert "150.0 KB" in result.message
+
+    def test_warns_when_an_image_exceeds_200kb_but_not_500kb(self):
+        html = '<html><body><img src="/big.png"></body></html>'
+        fetch_fn = make_fetch_stub({"https://acme.example/big.png": {"content_length": 300 * 1024}})
+        result = image_weight_check.run(make_check_context(html, fetch_fn=fetch_fn))
+        assert result.status == "WARN"
+
+    def test_fails_when_an_image_exceeds_500kb(self):
+        html = '<html><body><img src="/huge.png"></body></html>'
+        fetch_fn = make_fetch_stub({"https://acme.example/huge.png": {"content_length": 600 * 1024}})
+        result = image_weight_check.run(make_check_context(html, fetch_fn=fetch_fn))
+        assert result.status == "FAIL"
+        assert "500.0 KB" in result.message
+
+    def test_resolves_relative_src_against_site_url_before_fetching(self):
+        html = '<html><body><img src="images/hero.png"></body></html>'
+        requested = {}
+
+        def fetch_fn(url, method="GET"):
+            requested["url"] = url
+            return FetchedResource(url=url, ok=True, status=200, content_length=1024)
+
+        image_weight_check.run(make_check_context(html, site_url="https://acme.example/page/", fetch_fn=fetch_fn))
+        assert requested["url"] == "https://acme.example/page/images/hero.png"
+
+    def test_issues_head_requests_not_get(self):
+        html = '<html><body><img src="/a.png"></body></html>'
+        seen = {}
+
+        def fetch_fn(url, method="GET"):
+            seen["method"] = method
+            return FetchedResource(url=url, ok=True, status=200, content_length=1024)
+
+        image_weight_check.run(make_check_context(html, fetch_fn=fetch_fn))
+        assert seen["method"] == "HEAD"
+
+
+class TestRedirectChainCheck:
+    def test_passes_when_no_hops_recorded(self):
+        ctx = make_check_context(GOOD_HTML)
+        result = redirect_chain_check.run(ctx)
+        assert result.status == "PASS"
+        assert "no redirects" in result.message
+
+    def test_passes_for_a_chain_of_one_to_two_hops(self):
+        homepage = FetchedResource(
+            url="https://acme.example/final",
+            ok=True,
+            status=200,
+            body=GOOD_HTML,
+            hops=[Hop(url="https://acme.example/", status=301)],
+        )
+        ctx = make_check_context(GOOD_HTML)
+        ctx.resources.homepage = homepage
+        result = redirect_chain_check.run(ctx)
+        assert result.status == "PASS"
+
+    def test_warns_when_chain_is_longer_than_two_hops(self):
+        homepage = FetchedResource(
+            url="https://acme.example/final",
+            ok=True,
+            status=200,
+            body=GOOD_HTML,
+            hops=[
+                Hop(url="https://acme.example/", status=301),
+                Hop(url="https://acme.example/step2", status=301),
+                Hop(url="https://acme.example/step3", status=302),
+            ],
+        )
+        ctx = make_check_context(GOOD_HTML)
+        ctx.resources.homepage = homepage
+        result = redirect_chain_check.run(ctx)
+        assert result.status == "WARN"
+        assert "3 redirect hops" in result.message
+
+    def test_fails_when_an_intermediate_hop_errored(self):
+        homepage = FetchedResource(
+            url="https://acme.example/",
+            ok=False,
+            status=500,
+            error="boom",
+            hops=[Hop(url="https://acme.example/", status=500)],
+        )
+        ctx = make_check_context(GOOD_HTML)
+        ctx.resources.homepage = homepage
+        result = redirect_chain_check.run(ctx)
+        assert result.status == "FAIL"
+        assert "HTTP 500" in result.message

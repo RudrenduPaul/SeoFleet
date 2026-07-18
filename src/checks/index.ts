@@ -6,6 +6,8 @@ import { robotsTxtCheck } from "./technical/robots-txt.js";
 import { sitemapXmlCheck } from "./technical/sitemap-xml.js";
 import { headingStructureCheck } from "./technical/heading-structure.js";
 import { imageAltCheck } from "./technical/image-alt.js";
+import { imageWeightCheck } from "./technical/image-weight.js";
+import { redirectChainCheck } from "./technical/redirect-chain.js";
 import { structuredDataCheck } from "./geo/structured-data.js";
 import { llmsTxtCheck } from "./geo/llms-txt.js";
 import { aiCrawlerDirectivesCheck } from "./geo/ai-crawler-directives.js";
@@ -20,6 +22,8 @@ export const TECHNICAL_CHECKS: Check[] = [
   sitemapXmlCheck,
   headingStructureCheck,
   imageAltCheck,
+  imageWeightCheck,
+  redirectChainCheck,
 ];
 
 export const GEO_CHECKS: Check[] = [
@@ -40,6 +44,8 @@ export {
   sitemapXmlCheck,
   headingStructureCheck,
   imageAltCheck,
+  imageWeightCheck,
+  redirectChainCheck,
   structuredDataCheck,
   llmsTxtCheck,
   aiCrawlerDirectivesCheck,

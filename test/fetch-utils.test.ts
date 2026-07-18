@@ -165,4 +165,66 @@ describe("safeFetch", () => {
     expect(result.ok).toBe(false);
     expect(result.error).toMatch(/exceeded.*byte limit/);
   });
+
+  it("exposes the Content-Length header as contentLength when present", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("hello", { status: 200, headers: { "content-length": "5" } })),
+    );
+    const result = await safeFetch("https://example.com");
+    expect(result.contentLength).toBe(5);
+  });
+
+  it("leaves contentLength undefined when the header is absent", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("hello", { status: 200 })),
+    );
+    const result = await safeFetch("https://example.com");
+    expect(result.contentLength).toBeUndefined();
+  });
+
+  it("has no hops for a direct, non-redirected fetch", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("hello", { status: 200 })),
+    );
+    const result = await safeFetch("https://example.com");
+    expect(result.hops).toBeUndefined();
+  });
+
+  it("records each redirect hop's url and status, in order, on the final result", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(null, { status: 301, headers: { location: "https://example.com/b" } }))
+      .mockResolvedValueOnce(new Response(null, { status: 302, headers: { location: "https://example.com/c" } }))
+      .mockResolvedValueOnce(new Response("final", { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await safeFetch("https://example.com/a");
+    expect(result.ok).toBe(true);
+    expect(result.hops).toEqual([
+      { url: "https://example.com/a", status: 301 },
+      { url: "https://example.com/b", status: 302 },
+    ]);
+  });
+
+  it("records hops seen so far even when the chain ultimately fails", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(null, { status: 301, headers: { location: "https://example.com/b" } }))
+      .mockResolvedValueOnce(new Response("not found", { status: 404 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await safeFetch("https://example.com/a");
+    expect(result.ok).toBe(false);
+    expect(result.status).toBe(404);
+    expect(result.hops).toEqual([{ url: "https://example.com/a", status: 301 }]);
+  });
+
+  it("passes through an explicit method (e.g. HEAD) to the underlying fetch", async () => {
+    const fetchMock = vi.fn(async () => new Response(null, { status: 200, headers: { "content-length": "1234" } }));
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await safeFetch("https://example.com/image.png", { method: "HEAD" });
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({ method: "HEAD" });
+    expect(result.contentLength).toBe(1234);
+  });
 });
