@@ -18,6 +18,8 @@ import { faqSchemaCheck } from "./geo/faq-schema.js";
 import { contentExtractionCheck } from "./geo/content-extraction.js";
 import { speakableSchemaCheck } from "./geo/speakable-schema.js";
 import { organizationSchemaCheck } from "./geo/organization-schema.js";
+import { markdownNegotiationCheck } from "./geo/markdown-negotiation.js";
+import { linkHeaderCheck } from "./geo/link-header.js";
 
 export const TECHNICAL_CHECKS: Check[] = [
   titleCheck,
@@ -42,6 +44,8 @@ export const GEO_CHECKS: Check[] = [
   contentExtractionCheck,
   speakableSchemaCheck,
   organizationSchemaCheck,
+  markdownNegotiationCheck,
+  linkHeaderCheck,
 ];
 
 export const ALL_CHECKS: Check[] = [...TECHNICAL_CHECKS, ...GEO_CHECKS];
@@ -66,4 +70,6 @@ export {
   contentExtractionCheck,
   speakableSchemaCheck,
   organizationSchemaCheck,
+  markdownNegotiationCheck,
+  linkHeaderCheck,
 };

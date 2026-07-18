@@ -27,7 +27,7 @@ import socket
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
-from typing import Callable, List, Optional
+from typing import Callable, Dict, List, Optional
 from urllib.parse import urljoin, urlparse
 
 from .errors import LLMScoutError
@@ -125,6 +125,17 @@ class FetchedResource:
     # The response's Content-Length header, in bytes, when present and a
     # valid non-negative integer.
     content_length: Optional[int] = None
+    # The response's raw Content-Type header (e.g. "text/html;
+    # charset=utf-8"), when present. Exposed so a check that negotiates on
+    # content (e.g. markdown_negotiation.py, which sends
+    # `Accept: text/markdown` and needs to see what representation actually
+    # came back) doesn't need its own fetch layer -- the same additive
+    # shape as content_length.
+    content_type: Optional[str] = None
+    # The response's raw Link header (RFC 8288), when present, e.g.
+    # `<https://example.com/feed>; rel="alternate"`. Exposed verbatim,
+    # unparsed -- link_header.py owns interpreting it.
+    link_header: Optional[str] = None
     # Every redirect hop safe_fetch followed to reach the final url/status
     # above, in the order visited. None when the resource resolved with
     # zero redirects, or the request failed before any hop was recorded.
@@ -168,7 +179,12 @@ class _NoAutoRedirect(urllib.request.HTTPRedirectHandler):
 _opener = urllib.request.build_opener(_NoAutoRedirect)
 
 
-def safe_fetch(raw_url: str, method: str = "GET", user_agent: str = DEFAULT_USER_AGENT) -> FetchedResource:
+def safe_fetch(
+    raw_url: str,
+    method: str = "GET",
+    user_agent: str = DEFAULT_USER_AGENT,
+    headers: Optional[Dict[str, str]] = None,
+) -> FetchedResource:
     try:
         current = assert_http_url(raw_url)
     except LLMScoutError as err:
@@ -183,18 +199,34 @@ def safe_fetch(raw_url: str, method: str = "GET", user_agent: str = DEFAULT_USER
     def hops_or_none() -> Optional[List[Hop]]:
         return list(hops) if hops else None
 
+    # `headers` layers on top of the User-Agent default rather than
+    # replacing it, so a caller like markdown_negotiation.py can send
+    # `headers={"Accept": "text/markdown"}` without having to also restate
+    # the User-Agent -- the same additive shape as init.headers on the
+    # TypeScript CLI's safeFetch.
+    request_headers = {"User-Agent": user_agent, **(headers or {})}
+
     for _hop in range(MAX_REDIRECTS + 1):
-        request = urllib.request.Request(current, headers={"User-Agent": user_agent}, method=method)
+        request = urllib.request.Request(current, headers=request_headers, method=method)
         try:
             with _opener.open(request, timeout=TIMEOUT_SECONDS) as response:
                 status = response.status
                 content_length = _parse_content_length(response.headers.get("Content-Length"))
+                content_type = response.headers.get("Content-Type")
+                link_header = response.headers.get("Link")
                 try:
                     body = _read_capped(response, MAX_BODY_BYTES).decode("utf-8", errors="replace")
                 except LLMScoutError as err:
                     return FetchedResource(url=current, ok=False, status=status, error=str(err), hops=hops_or_none())
                 return FetchedResource(
-                    url=current, ok=True, status=status, body=body, content_length=content_length, hops=hops_or_none()
+                    url=current,
+                    ok=True,
+                    status=status,
+                    body=body,
+                    content_length=content_length,
+                    content_type=content_type,
+                    link_header=link_header,
+                    hops=hops_or_none(),
                 )
         except urllib.error.HTTPError as err:
             status = err.code
@@ -225,13 +257,22 @@ def safe_fetch(raw_url: str, method: str = "GET", user_agent: str = DEFAULT_USER
                 current = next_url
                 continue
             content_length = _parse_content_length(err.headers.get("Content-Length") if err.headers else None)
+            content_type = err.headers.get("Content-Type") if err.headers else None
+            link_header = err.headers.get("Link") if err.headers else None
             try:
                 body_bytes = _read_capped(err, MAX_BODY_BYTES)
             except LLMScoutError as cap_err:
                 return FetchedResource(url=current, ok=False, status=status, error=str(cap_err), hops=hops_or_none())
             body = body_bytes.decode("utf-8", errors="replace") if body_bytes else ""
             return FetchedResource(
-                url=current, ok=False, status=status, body=body, content_length=content_length, hops=hops_or_none()
+                url=current,
+                ok=False,
+                status=status,
+                body=body,
+                content_length=content_length,
+                content_type=content_type,
+                link_header=link_header,
+                hops=hops_or_none(),
             )
         except (urllib.error.URLError, socket.timeout, OSError) as err:
             reason = getattr(err, "reason", None)

@@ -151,6 +151,48 @@ class TestSafeFetch:
         assert result.status == 404
         assert result.hops == [fetch_utils.Hop(url="https://example.com/a", status=301)]
 
+    def test_exposes_content_type_when_present(self, monkeypatch):
+        monkeypatch.setattr(
+            fetch_utils._opener,
+            "open",
+            lambda *a, **k: _FakeResponse(200, b"# Hi", {"Content-Type": "text/markdown; charset=utf-8"}),
+        )
+        result = safe_fetch("https://example.com")
+        assert result.content_type == "text/markdown; charset=utf-8"
+
+    def test_leaves_content_type_none_when_header_absent(self, monkeypatch):
+        monkeypatch.setattr(fetch_utils._opener, "open", lambda *a, **k: _FakeResponse(200, b"hello"))
+        result = safe_fetch("https://example.com")
+        assert result.content_type is None
+
+    def test_exposes_link_header_when_present(self, monkeypatch):
+        monkeypatch.setattr(
+            fetch_utils._opener,
+            "open",
+            lambda *a, **k: _FakeResponse(200, b"hello", {"Link": '<https://example.com/feed>; rel="alternate"'}),
+        )
+        result = safe_fetch("https://example.com")
+        assert result.link_header == '<https://example.com/feed>; rel="alternate"'
+
+    def test_leaves_link_header_none_when_header_absent(self, monkeypatch):
+        monkeypatch.setattr(fetch_utils._opener, "open", lambda *a, **k: _FakeResponse(200, b"hello"))
+        result = safe_fetch("https://example.com")
+        assert result.link_header is None
+
+    def test_sends_extra_headers_alongside_the_default_user_agent(self, monkeypatch):
+        captured: dict = {}
+
+        def fake_open(request, *a, **k):
+            captured["accept"] = request.headers.get("Accept")
+            captured["user_agent"] = request.headers.get("User-agent")
+            return _FakeResponse(200, b"# Hi")
+
+        monkeypatch.setattr(fetch_utils._opener, "open", fake_open)
+        result = safe_fetch("https://example.com", headers={"Accept": "text/markdown"})
+        assert result.ok is True
+        assert captured["accept"] == "text/markdown"
+        assert captured["user_agent"] == DEFAULT_USER_AGENT
+
     def test_passes_an_explicit_method_through_to_the_request(self, monkeypatch):
         seen_methods = []
 

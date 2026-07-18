@@ -184,6 +184,48 @@ describe("safeFetch", () => {
     expect(result.contentLength).toBeUndefined();
   });
 
+  it("exposes the Content-Type header as contentType when present", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("# Hi", { status: 200, headers: { "content-type": "text/markdown; charset=utf-8" } })),
+    );
+    const result = await safeFetch("https://example.com");
+    expect(result.contentType).toBe("text/markdown; charset=utf-8");
+  });
+
+  it("leaves contentType undefined when the header is absent", async () => {
+    // A string body makes Response auto-set Content-Type -- use a null body
+    // (as a HEAD-style response would have) to get a response with truly
+    // no Content-Type header.
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(null, { status: 200 })),
+    );
+    const result = await safeFetch("https://example.com");
+    expect(result.contentType).toBeUndefined();
+  });
+
+  it("exposes the Link header as linkHeader when present", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response("hello", { status: 200, headers: { link: '<https://example.com/feed>; rel="alternate"' } }),
+      ),
+    );
+    const result = await safeFetch("https://example.com");
+    expect(result.linkHeader).toBe('<https://example.com/feed>; rel="alternate"');
+  });
+
+  it("leaves linkHeader undefined when the header is absent", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("hello", { status: 200 })),
+    );
+    const result = await safeFetch("https://example.com");
+    expect(result.linkHeader).toBeUndefined();
+  });
+
   it("has no hops for a direct, non-redirected fetch", async () => {
     vi.stubGlobal(
       "fetch",

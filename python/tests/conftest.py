@@ -75,10 +75,13 @@ def make_fetch_stub(routes: Dict[str, Dict[str, object]]) -> FetchFn:
     """Builds a fetch function stub keyed by exact URL. No real network
     calls happen when this is passed as `fetch_fn`. Accepts (and ignores)
     a `method` kwarg so the same stub also serves image_weight's HEAD
-    requests, made through the same fetch_fn as the four shared site
-    resources."""
+    requests, and a `headers` kwarg so it also serves
+    markdown_negotiation's `Accept: text/markdown` request -- both made
+    through the same fetch_fn as the four shared site resources."""
 
-    def _stub(url: str, method: str = "GET") -> FetchedResource:  # noqa: ARG001 - method intentionally unused
+    def _stub(
+        url: str, method: str = "GET", headers: Optional[Dict[str, str]] = None
+    ) -> FetchedResource:  # noqa: ARG001 - method/headers intentionally unused
         route = routes.get(url)
         if route is None:
             return FetchedResource(url=url, ok=False, status=404, error="not stubbed")
@@ -91,6 +94,8 @@ def make_fetch_stub(routes: Dict[str, Dict[str, object]]) -> FetchFn:
             body=route.get("body"),
             error=route.get("error"),
             content_length=route.get("content_length"),
+            content_type=route.get("content_type"),
+            link_header=route.get("link_header"),
         )
 
     return _stub
