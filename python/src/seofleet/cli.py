@@ -51,6 +51,10 @@ def build_parser() -> argparse.ArgumentParser:
         "check", help="Run SEO/GEO checks against a local project's configured site"
     )
     check_parser.add_argument("path", help="local project directory containing seofleet.json")
+    check_parser.add_argument(
+        "--out-dir", dest="out_dir", default=None,
+        help="also write an auto-named report file for this site into this directory",
+    )
 
     fleet_parser = subparsers.add_parser(
         "fleet", help="Run the full check suite against every site listed in a fleet manifest"
@@ -58,6 +62,10 @@ def build_parser() -> argparse.ArgumentParser:
     fleet_parser.add_argument(
         "config_json", metavar="config.json",
         help='fleet manifest file: { "sites": [{ "name", "path" }] }',
+    )
+    fleet_parser.add_argument(
+        "--out-dir", dest="out_dir", default=None,
+        help='also write one auto-named report file per site (named from the manifest\'s "name" field) into this directory',
     )
 
     return parser
@@ -92,9 +100,9 @@ def run_cli(argv: List[str]) -> int:
     if args.command == "init":
         result = run_init_command(args.path, args.site_url, args.json)
     elif args.command == "check":
-        result = run_check_command(args.path, args.json, user_agent=args.user_agent)
+        result = run_check_command(args.path, args.json, user_agent=args.user_agent, out_dir=args.out_dir)
     elif args.command == "fleet":
-        result = run_fleet_command(args.config_json, args.json, user_agent=args.user_agent)
+        result = run_fleet_command(args.config_json, args.json, user_agent=args.user_agent, out_dir=args.out_dir)
     else:  # pragma: no cover - argparse restricts to the registered subcommands
         parser.print_help()
         return 0

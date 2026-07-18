@@ -4,6 +4,7 @@ from __future__ import annotations
 import email.message
 import io
 import json
+import os
 import sys
 from unittest.mock import patch
 
@@ -11,7 +12,7 @@ from seofleet import fetch_utils
 from seofleet.cli import run_cli
 from seofleet.cli_lib import run_check_command, run_fleet_command, run_init_command
 
-from .conftest import GOOD_HTML, make_fetch_stub
+from .conftest import GOOD_HTML, GOOD_ROBOTS_TXT, GOOD_SITEMAP_XML, make_fetch_stub
 
 
 class _FakeHttpResponse:
@@ -88,6 +89,77 @@ def test_run_fleet_command_reports_site_errors(tmp_path):
     manifest.write_text(json.dumps({"sites": [{"name": "missing", "path": "./nope"}]}))
     output = run_fleet_command(str(manifest), json_output=False)
     assert output.exit_code == 1
+
+
+def test_run_check_command_writes_report_file_into_out_dir(tmp_path):
+    (tmp_path / "seofleet.json").write_text(json.dumps({"siteUrl": "https://good.example/"}))
+    stub = make_fetch_stub({
+        "https://good.example/": {"body": GOOD_HTML, "status": 200},
+        "https://good.example/robots.txt": {"body": GOOD_ROBOTS_TXT, "status": 200},
+        "https://good.example/sitemap.xml": {"body": GOOD_SITEMAP_XML, "status": 200},
+        "https://good.example/llms.txt": {"status": 404, "ok": False},
+    })
+    out_dir = str(tmp_path / "reports")
+    output = run_check_command(str(tmp_path), json_output=False, fetch_fn=stub, out_dir=out_dir)
+
+    report_file = os.path.join(out_dir, "good-example.txt")
+    assert os.path.exists(report_file)
+    with open(report_file, "r", encoding="utf-8") as fh:
+        assert fh.read() == output.stdout
+    assert output.stderr == f"Report written to: {report_file}"
+
+
+def test_run_check_command_writes_json_report_without_corrupting_stdout(tmp_path):
+    (tmp_path / "seofleet.json").write_text(json.dumps({"siteUrl": "https://good.example/"}))
+    stub = make_fetch_stub({
+        "https://good.example/": {"body": GOOD_HTML, "status": 200},
+        "https://good.example/robots.txt": {"body": GOOD_ROBOTS_TXT, "status": 200},
+        "https://good.example/sitemap.xml": {"body": GOOD_SITEMAP_XML, "status": 200},
+        "https://good.example/llms.txt": {"status": 404, "ok": False},
+    })
+    out_dir = str(tmp_path / "reports")
+    output = run_check_command(str(tmp_path), json_output=True, fetch_fn=stub, out_dir=out_dir)
+
+    json.loads(output.stdout)  # does not raise
+    assert os.path.exists(os.path.join(out_dir, "good-example.json"))
+
+
+def test_run_fleet_command_writes_per_site_report_and_notes_count_on_stderr(tmp_path):
+    client_a = tmp_path / "client-a"
+    client_a.mkdir()
+    (client_a / "seofleet.json").write_text(json.dumps({"siteUrl": "https://good.example/"}))
+    manifest = tmp_path / "fleet.json"
+    manifest.write_text(json.dumps({"sites": [{"name": "client-a", "path": "./client-a"}]}))
+
+    stub = make_fetch_stub({
+        "https://good.example/": {"body": GOOD_HTML, "status": 200},
+        "https://good.example/robots.txt": {"body": GOOD_ROBOTS_TXT, "status": 200},
+        "https://good.example/sitemap.xml": {"body": GOOD_SITEMAP_XML, "status": 200},
+        "https://good.example/llms.txt": {"status": 404, "ok": False},
+    })
+    out_dir = str(tmp_path / "reports")
+    output = run_fleet_command(str(manifest), json_output=False, fetch_fn=stub, out_dir=out_dir)
+
+    assert os.listdir(out_dir) == ["client-a.txt"]
+    assert output.stderr == f"Wrote 1 report file(s) to: {out_dir}"
+
+
+def test_run_cli_check_help_lists_out_dir_option(capsys):
+    try:
+        run_cli(["seofleet", "check", "--help"])
+    except SystemExit as exc:
+        assert exc.code == 0
+    captured = capsys.readouterr()
+    assert "--out-dir" in captured.out
+
+
+def test_run_cli_fleet_help_lists_out_dir_option(capsys):
+    try:
+        run_cli(["seofleet", "fleet", "--help"])
+    except SystemExit as exc:
+        assert exc.code == 0
+    captured = capsys.readouterr()
+    assert "--out-dir" in captured.out
 
 
 def test_run_cli_no_command_prints_help_and_exits_zero(capsys):

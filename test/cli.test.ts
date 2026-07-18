@@ -74,4 +74,16 @@ describe("CLI", () => {
     const { status } = runCli(["fleet", path.join(dir, "fleet.json")]);
     expect(status).toBe(2);
   });
+
+  it("lists --out-dir as a check subcommand option in help", () => {
+    const { stdout, status } = runCli(["check", "--help"]);
+    expect(status).toBe(0);
+    expect(stdout).toMatch(/--out-dir <dir>/);
+  });
+
+  it("lists --out-dir as a fleet subcommand option in help", () => {
+    const { stdout, status } = runCli(["fleet", "--help"]);
+    expect(status).toBe(0);
+    expect(stdout).toMatch(/--out-dir <dir>/);
+  });
 });
