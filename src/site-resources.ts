@@ -1,8 +1,8 @@
 import * as cheerio from "cheerio";
-import { assertHttpUrl, safeFetch, type FetchedResource } from "./fetch-utils.js";
-import type { CheckContext, SiteResources } from "./types.js";
+import { assertHttpUrl, safeFetch } from "./fetch-utils.js";
+import type { CheckContext, FetchFn, SiteResources } from "./types.js";
 
-export type FetchFn = (url: string) => Promise<FetchedResource>;
+export type { FetchFn } from "./types.js";
 
 /**
  * Parses `Sitemap:` directive lines out of a robots.txt body. Per the
@@ -75,13 +75,16 @@ export async function fetchSiteResources(siteUrl: URL, fetchFn: FetchFn = safeFe
  * Builds the shared CheckContext from already-fetched resources: parses the
  * homepage HTML once with cheerio (or leaves `$` null if the homepage
  * couldn't be fetched at all) so every check reuses the same parsed DOM
- * instead of re-parsing HTML per check.
+ * instead of re-parsing HTML per check. `fetchFn` is threaded onto the
+ * context too, so a check that needs its own additional requests (e.g.
+ * image-weight's per-image HEAD requests) reuses the exact same fetch
+ * function -- and the same test stub -- as the four shared site resources.
  */
-export function buildCheckContext(resources: SiteResources): CheckContext {
+export function buildCheckContext(resources: SiteResources, fetchFn: FetchFn = safeFetch): CheckContext {
   if (!resources.homepage.ok || resources.homepage.body === undefined) {
-    return { resources, $: null };
+    return { resources, $: null, fetchFn };
   }
-  return { resources, $: cheerio.load(resources.homepage.body) };
+  return { resources, $: cheerio.load(resources.homepage.body), fetchFn };
 }
 
 /**
@@ -92,5 +95,5 @@ export function buildCheckContext(resources: SiteResources): CheckContext {
 export async function loadSite(rawSiteUrl: string, fetchFn: FetchFn = safeFetch): Promise<CheckContext> {
   const siteUrl = assertHttpUrl(rawSiteUrl);
   const resources = await fetchSiteResources(siteUrl, fetchFn);
-  return buildCheckContext(resources);
+  return buildCheckContext(resources, fetchFn);
 }

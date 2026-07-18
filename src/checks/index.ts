@@ -9,6 +9,8 @@ import { imageAltCheck } from "./technical/image-alt.js";
 import { openGraphCheck } from "./technical/open-graph.js";
 import { twitterCardCheck } from "./technical/twitter-card.js";
 import { robotsMetaDirectivesCheck } from "./technical/robots-meta-directives.js";
+import { imageWeightCheck } from "./technical/image-weight.js";
+import { redirectChainCheck } from "./technical/redirect-chain.js";
 import { structuredDataCheck } from "./geo/structured-data.js";
 import { llmsTxtCheck } from "./geo/llms-txt.js";
 import { aiCrawlerDirectivesCheck } from "./geo/ai-crawler-directives.js";
@@ -28,6 +30,8 @@ export const TECHNICAL_CHECKS: Check[] = [
   openGraphCheck,
   twitterCardCheck,
   robotsMetaDirectivesCheck,
+  imageWeightCheck,
+  redirectChainCheck,
 ];
 
 export const GEO_CHECKS: Check[] = [
@@ -53,6 +57,8 @@ export {
   openGraphCheck,
   twitterCardCheck,
   robotsMetaDirectivesCheck,
+  imageWeightCheck,
+  redirectChainCheck,
   structuredDataCheck,
   llmsTxtCheck,
   aiCrawlerDirectivesCheck,

@@ -89,17 +89,31 @@ Disallow:
 Sitemap: https://acme.example/sitemap_index.xml
 `;
 
+/** Default fetchFn stub for a CheckContext -- matches makeFetchStub's own
+ * behavior for a URL nobody stubbed, so a test that doesn't care about a
+ * check's own additional fetches (e.g. image-weight's HEAD requests) still
+ * makes zero real network calls. */
+const NOT_STUBBED: FetchFn = async (url: string): Promise<FetchedResource> => ({
+  url,
+  ok: false,
+  status: 404,
+  error: "not stubbed",
+});
+
 /**
  * Builds a full CheckContext for a single check test: `html: null` models
  * an unreachable homepage (every DOM-dependent check should FAIL in that
  * case), otherwise the HTML is parsed with cheerio exactly as the real
  * runner would. `resourceOverrides` lets a test set robots.txt/sitemap.xml/
- * llms.txt fetch results for the checks that read those directly.
+ * llms.txt fetch results for the checks that read those directly. `fetchFn`
+ * lets a test stub the additional requests a check like image-weight makes
+ * beyond the four shared site resources.
  */
 export function makeCheckContext(
   html: string | null,
   resourceOverrides: Partial<Omit<SiteResources, "siteUrl" | "homepage">> = {},
   siteUrl = "https://acme.example/",
+  fetchFn: FetchFn = NOT_STUBBED,
 ): CheckContext {
   const resources: SiteResources = {
     siteUrl: new URL(siteUrl),
@@ -112,5 +126,5 @@ export function makeCheckContext(
     additionalSitemaps: resourceOverrides.additionalSitemaps ?? [],
     llmsTxt: resourceOverrides.llmsTxt ?? { url: new URL("/llms.txt", siteUrl).toString(), ok: false, status: 404 },
   };
-  return { resources, $: html !== null ? cheerio.load(html) : null };
+  return { resources, $: html !== null ? cheerio.load(html) : null, fetchFn };
 }

@@ -1,6 +1,16 @@
 import type { CheerioAPI } from "cheerio";
 import type { FetchedResource } from "./fetch-utils.js";
 
+/**
+ * The fetch function every check that needs its own network access beyond
+ * the four shared site resources (currently just image-weight, for its
+ * per-image HEAD requests) is handed via CheckContext.fetchFn -- the same
+ * fetchFn a caller already injects into loadSite/fetchSiteResources for
+ * testing, so one stub covers both the shared resources and any check's
+ * own additional fetches.
+ */
+export type FetchFn = (url: string, init?: RequestInit) => Promise<FetchedResource>;
+
 export type CheckStatus = "PASS" | "FAIL" | "WARN";
 
 export type CheckCategory = "technical" | "geo";
@@ -38,6 +48,8 @@ export interface CheckContext {
   resources: SiteResources;
   /** Parsed homepage DOM, or null if the homepage fetch failed. */
   $: CheerioAPI | null;
+  /** See FetchFn -- the fetch function checks use for their own additional requests. */
+  fetchFn: FetchFn;
 }
 
 /**
