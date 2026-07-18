@@ -11,6 +11,19 @@ export interface FetchedResource {
   status?: number;
   body?: string;
   error?: string;
+  /** The response's Content-Length header, in bytes, when present and a valid non-negative integer. */
+  contentLength?: number;
+  /**
+   * Every redirect hop safeFetch followed to reach the final `url`/`status`
+   * above, in the order visited -- e.g. a chain of two 301s before landing
+   * on the final page produces two entries here. Absent (undefined) when
+   * the resource resolved with zero redirects, or when the request failed
+   * before any hop could be recorded (e.g. an invalid URL). This is data
+   * safeFetch already computed for its own control flow and previously
+   * discarded once each hop's status had been used to decide whether to
+   * keep following the chain.
+   */
+  hops?: { url: string; status: number }[];
 }
 
 const MAX_REDIRECTS = 5;
@@ -97,6 +110,16 @@ export function assertHttpUrl(raw: string): URL {
 }
 
 /**
+ * Parses a Content-Length header value into a non-negative byte count, or
+ * null if the header is absent, non-numeric, or negative.
+ */
+function parseContentLength(value: string | null): number | undefined {
+  if (!value) return undefined;
+  const n = Number.parseInt(value, 10);
+  return Number.isFinite(n) && n >= 0 ? n : undefined;
+}
+
+/**
  * Reads a response body up to maxBytes, cancelling the stream instead of
  * buffering it unbounded once the cap is exceeded -- a stalling or huge
  * response can't hang or OOM an unattended fleet scan.
@@ -152,6 +175,13 @@ export async function safeFetch(rawUrl: string, init?: RequestInit): Promise<Fet
     };
   }
 
+  // Every redirect hop actually followed, in visit order -- previously
+  // discarded once its status had been used to decide whether to keep
+  // following the chain; now threaded through onto the final result so
+  // callers (e.g. the redirect-chain check) can see the whole path.
+  const hops: { url: string; status: number }[] = [];
+  const hopsField = (): { hops?: { url: string; status: number }[] } => (hops.length > 0 ? { hops: [...hops] } : {});
+
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
     let response: Response;
     try {
@@ -165,6 +195,7 @@ export async function safeFetch(rawUrl: string, init?: RequestInit): Promise<Fet
         url: current.toString(),
         ok: false,
         error: err instanceof Error ? err.message : String(err),
+        ...hopsField(),
       };
     }
 
@@ -179,6 +210,7 @@ export async function safeFetch(rawUrl: string, init?: RequestInit): Promise<Fet
           ok: false,
           status: response.status,
           error: `Redirect to an invalid location: "${location}"`,
+          ...hopsField(),
         };
       }
       if (next.protocol !== "http:" && next.protocol !== "https:") {
@@ -187,6 +219,7 @@ export async function safeFetch(rawUrl: string, init?: RequestInit): Promise<Fet
           ok: false,
           status: response.status,
           error: `Refused to follow redirect to non-http(s) scheme "${next.protocol}"`,
+          ...hopsField(),
         };
       }
       if (isBlockedHost(next.hostname)) {
@@ -195,12 +228,15 @@ export async function safeFetch(rawUrl: string, init?: RequestInit): Promise<Fet
           ok: false,
           status: response.status,
           error: `Refused to follow redirect to a loopback, private, or link-local address`,
+          ...hopsField(),
         };
       }
+      hops.push({ url: current.toString(), status: response.status });
       current = next;
       continue;
     }
 
+    const contentLength = parseContentLength(response.headers.get("content-length"));
     let body: string;
     try {
       body = await readBodyCapped(response, MAX_BODY_BYTES);
@@ -210,14 +246,23 @@ export async function safeFetch(rawUrl: string, init?: RequestInit): Promise<Fet
         ok: false,
         status: response.status,
         error: err instanceof Error ? err.message : String(err),
+        ...hopsField(),
       };
     }
-    return { url: current.toString(), ok: response.ok, status: response.status, body };
+    return {
+      url: current.toString(),
+      ok: response.ok,
+      status: response.status,
+      body,
+      ...(contentLength !== undefined ? { contentLength } : {}),
+      ...hopsField(),
+    };
   }
 
   return {
     url: current.toString(),
     ok: false,
     error: `Too many redirects (> ${MAX_REDIRECTS})`,
+    ...hopsField(),
   };
 }

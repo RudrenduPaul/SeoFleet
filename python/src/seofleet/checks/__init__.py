@@ -14,9 +14,11 @@ from .geo.structured_data import structured_data_check
 from .technical.canonical import canonical_check
 from .technical.heading_structure import heading_structure_check
 from .technical.image_alt import image_alt_check
+from .technical.image_weight import image_weight_check
 from .technical.meta_description import meta_description_check
 from .technical.open_graph import open_graph_check
 from .technical.robots_meta_directives import robots_meta_directives_check
+from .technical.redirect_chain import redirect_chain_check
 from .technical.robots_txt import robots_txt_check
 from .technical.sitemap_xml import sitemap_xml_check
 from .technical.title import title_check
@@ -33,6 +35,8 @@ TECHNICAL_CHECKS: List[Check] = [
     open_graph_check,
     twitter_card_check,
     robots_meta_directives_check,
+    image_weight_check,
+    redirect_chain_check,
 ]
 
 GEO_CHECKS: List[Check] = [
@@ -61,6 +65,8 @@ __all__ = [
     "open_graph_check",
     "twitter_card_check",
     "robots_meta_directives_check",
+    "image_weight_check",
+    "redirect_chain_check",
     "structured_data_check",
     "llms_txt_check",
     "ai_crawler_directives_check",

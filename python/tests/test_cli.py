@@ -36,7 +36,7 @@ def test_run_check_command_json_output_is_valid_json(tmp_path):
     stub = make_fetch_stub({"https://acme.example/": {"body": GOOD_HTML, "status": 200}})
     output = run_check_command(str(tmp_path), json_output=True, fetch_fn=stub)
     payload = json.loads(output.stdout)
-    assert payload["summary"]["total"] == 17
+    assert payload["summary"]["total"] == 19
 
 
 def test_run_fleet_command_reports_site_errors(tmp_path):

@@ -15,11 +15,9 @@ from typing import Callable, List, Optional
 from urllib.parse import urljoin, urlparse
 
 from .errors import SeoFleetError
-from .fetch_utils import FetchedResource, assert_http_url, safe_fetch
+from .fetch_utils import assert_http_url, safe_fetch
 from .html_util import parse_html
-from .types import CheckContext, SiteResources
-
-FetchFn = Callable[[str], FetchedResource]
+from .types import CheckContext, FetchFn, SiteResources
 
 
 def parse_sitemap_directives(robots_txt: str) -> List[str]:
@@ -91,16 +89,20 @@ def fetch_site_resources(site_url: str, fetch_fn: Optional[FetchFn] = None) -> S
     )
 
 
-def build_check_context(resources: SiteResources) -> CheckContext:
+def build_check_context(resources: SiteResources, fetch_fn: Optional[FetchFn] = None) -> CheckContext:
     """
     Builds the shared CheckContext from already-fetched resources: parses
     the homepage HTML once (or leaves `root` None if the homepage couldn't
     be fetched at all) so every check reuses the same parsed tree instead of
-    re-parsing HTML per check.
+    re-parsing HTML per check. `fetch_fn` is threaded onto the context too,
+    so a check that needs its own additional requests (e.g. image_weight's
+    per-image HEAD requests) reuses the exact same fetch function -- and the
+    same test stub -- as the four shared site resources.
     """
+    fetch = fetch_fn or safe_fetch
     if not resources.homepage.ok or resources.homepage.body is None:
-        return CheckContext(resources=resources, root=None)
-    return CheckContext(resources=resources, root=parse_html(resources.homepage.body))
+        return CheckContext(resources=resources, root=None, fetch_fn=fetch)
+    return CheckContext(resources=resources, root=parse_html(resources.homepage.body), fetch_fn=fetch)
 
 
 def load_site(raw_site_url: str, fetch_fn: Optional[FetchFn] = None) -> CheckContext:
@@ -111,7 +113,7 @@ def load_site(raw_site_url: str, fetch_fn: Optional[FetchFn] = None) -> CheckCon
     """
     site_url = assert_http_url(raw_site_url)
     resources = fetch_site_resources(site_url, fetch_fn)
-    return build_check_context(resources)
+    return build_check_context(resources, fetch_fn)
 
 
 __all__ = ["FetchFn", "parse_sitemap_directives", "fetch_site_resources", "build_check_context", "load_site"]
