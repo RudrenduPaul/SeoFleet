@@ -133,6 +133,17 @@ def get_meta_content(root: Element, name: str) -> Optional[str]:
     return None
 
 
+def get_meta_property(root: Element, property_: str) -> Optional[str]:
+    """First `<meta property="...">`'s `content` attribute, case-insensitive
+    property match (e.g. Open Graph's `og:title`), or None if no such tag
+    exists."""
+    for el in root.find_all(("meta",)):
+        if (el.attr("property") or "").strip().lower() == property_.lower():
+            content = el.attr("content")
+            return content.strip() if content is not None else None
+    return None
+
+
 def get_link_href(root: Element, rel: str) -> Optional[str]:
     """First `<link rel="...">`'s `href` attribute, case-insensitive rel
     match, or None if no such tag exists."""

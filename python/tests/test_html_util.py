@@ -2,7 +2,7 @@
 cheerio provided this directly on that side)."""
 from __future__ import annotations
 
-from seofleet.html_util import get_link_href, get_meta_content, get_scripts_by_type, parse_html
+from seofleet.html_util import get_link_href, get_meta_content, get_meta_property, get_scripts_by_type, parse_html
 
 
 def test_void_tags_do_not_swallow_siblings():
@@ -54,3 +54,14 @@ def test_document_order_preserved_for_headings():
     root = parse_html("<html><body><h1>a</h1><h3>b</h3><h2>c</h2></body></html>")
     tags = [el.tag for el in root.find_all(("h1", "h2", "h3"))]
     assert tags == ["h1", "h3", "h2"]
+
+
+def test_meta_property_missing_vs_present():
+    root = parse_html('<html><head><meta property="og:title" content="Acme Widgets"></head></html>')
+    assert get_meta_property(root, "og:description") is None
+    assert get_meta_property(root, "og:title") == "Acme Widgets"
+
+
+def test_meta_property_case_insensitive():
+    root = parse_html('<html><head><meta property="OG:Title" content="Acme Widgets"></head></html>')
+    assert get_meta_property(root, "og:title") == "Acme Widgets"
