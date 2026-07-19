@@ -11,7 +11,7 @@ Runs 21 technical-SEO and GEO (generative-engine-optimization) checks against yo
 
 </div>
 
-<!-- TODO: record demo -->
+![Installing LLMScout-cli with npm, then running LLMScout init and LLMScout check against a live site, with the resulting PASS/WARN/FAIL check output in the terminal](./docs/demo.gif)
 
 ## Contents
 
@@ -291,6 +291,8 @@ Commands:
 
 ## Fleet mode
 
+![Running cat fleet.json to show a two-site manifest, then LLMScout fleet ./fleet.json checking both sites and printing a per-site PASS/FAIL summary](./docs/usage.gif)
+
 `fleet` is aimed at agencies or teams that maintain several client sites side by side as local repos. You declare each site in one manifest and check them all in a single command:
 
 ```json
@@ -377,6 +379,9 @@ Yes. Pass the global `--json` flag to any command for structured JSON, including
 
 **Is there a Python version?**
 Yes -- `pip install LLMScout-cli` installs a genuine, independent Python port (not a wrapper around the Node binary), with zero runtime dependencies. It runs the same 21 checks with the same PASS/WARN/FAIL verdicts as this npm package. See [python/README.md](./python/README.md).
+
+**Can I use LLMScout commercially, or in a closed-source project?**
+Yes. Both distributions are MIT licensed (see [LICENSE](./LICENSE)): you can use, modify, and redistribute LLMScout in commercial and closed-source work, with no royalty and no obligation to open-source anything it checks. The only requirement is keeping the copyright notice and license text if you redistribute the source itself.
 
 ## Contributing
 
