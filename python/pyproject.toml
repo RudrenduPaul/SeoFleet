@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "seofleet-cli"
-version = "0.2.0"
+version = "0.2.1"
 description = "Zero-config, cross-platform SEO and GEO (generative engine optimization) checker: 12 checks against a live site, plus multi-site fleet mode, in pure Python with no extra runtime toolchain."
 readme = "README.md"
 requires-python = ">=3.9"
