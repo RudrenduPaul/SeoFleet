@@ -5,13 +5,13 @@
 Runs 21 technical-SEO and GEO (generative-engine-optimization) checks against your site, in pure TypeScript or pure Python, with zero Python interpreter, zero headless browser, and zero external toolchain either way.
 
 [![CI](https://github.com/RudrenduPaul/LLMScout/actions/workflows/ci.yml/badge.svg)](https://github.com/RudrenduPaul/LLMScout/actions/workflows/ci.yml)
-[![npm version](https://img.shields.io/npm/v/LLMScout-cli.svg)](https://www.npmjs.com/package/LLMScout-cli)
-[![PyPI version](https://img.shields.io/pypi/v/LLMScout-cli.svg)](https://pypi.org/project/LLMScout-cli/)
+[![npm version](https://img.shields.io/npm/v/llmscout-cli.svg)](https://www.npmjs.com/package/llmscout-cli)
+[![PyPI version](https://img.shields.io/pypi/v/llmscout-cli.svg)](https://pypi.org/project/llmscout-cli/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 
 </div>
 
-![Installing LLMScout-cli with npm, then running LLMScout init and LLMScout check against a live site, with the resulting PASS/WARN/FAIL check output in the terminal](./docs/demo.gif)
+![Installing llmscout-cli with npm, then running llmscout init and llmscout check against a live site, with the resulting PASS/WARN/FAIL check output in the terminal](./docs/demo.gif)
 
 ## Contents
 
@@ -23,7 +23,7 @@ Runs 21 technical-SEO and GEO (generative-engine-optimization) checks against yo
 - [CLI reference](#cli-reference)
 - [Fleet mode](#fleet-mode)
 - [Comparison](#comparison)
-- [What is LLMScout, and why does it exist](#what-is-LLMScout-and-why-does-it-exist)
+- [What is LLMScout, and why does it exist](#what-is-llmscout-and-why-does-it-exist)
 - [FAQ](#faq)
 - [Contributing](#contributing)
 - [License](#license)
@@ -35,9 +35,9 @@ LLMScout ships as two independent, complementary distributions. Both run the sam
 **Node/TypeScript (npm, published):**
 
 ```bash
-npm install -g LLMScout-cli
-LLMScout init ./my-site --site-url https://example.com
-LLMScout check ./my-site
+npm install -g llmscout-cli
+llmscout init ./my-site --site-url https://example.com
+llmscout check ./my-site
 ```
 
 The CLI targets Node 18+ (declared in `package.json` `engines`). The two runtime dependencies are `cheerio` (HTML parsing) and `commander` (argument parsing): there is no Python interpreter, no `pip install`, and no Playwright/Chromium download anywhere in the npm install.
@@ -45,9 +45,9 @@ The CLI targets Node 18+ (declared in `package.json` `engines`). The two runtime
 **Python (PyPI):**
 
 ```bash
-pip install LLMScout-cli
-LLMScout init ./my-site --site-url https://example.com
-LLMScout check ./my-site
+pip install llmscout-cli
+llmscout init ./my-site --site-url https://example.com
+llmscout check ./my-site
 ```
 
 Zero runtime dependencies -- HTML parsing and HTTP fetching both use only the Python standard library. See [python/README.md](./python/README.md) for the full Python-specific guide.
@@ -55,10 +55,10 @@ Zero runtime dependencies -- HTML parsing and HTTP fetching both use only the Py
 Then, in any project you want to check:
 
 ```bash
-LLMScout init .
+llmscout init .
 ```
 
-That scaffolds a `LLMScout.json` config and a small Claude Code skill file into the target directory. Set your site URL and run `LLMScout check .`.
+That scaffolds a `llmscout.json` config and a small Claude Code skill file into the target directory. Set your site URL and run `llmscout check .`.
 
 ## Why GEO checks matter right now
 
@@ -77,7 +77,7 @@ Search traffic is genuinely shifting toward AI-mediated answers, and the shift i
 - **Zero external toolchain, either language.** `child_process` is never imported anywhere in the TypeScript source; the Python port has zero runtime dependencies. Checks run inside the process instead of shelling out to Python scripts or a headless browser.
 - **Cross-platform by construction.** No `python3`-versus-`py -3` shelling and no relative-path script resolution, so the same install runs identically on Windows, macOS, and Linux.
 - **Hardened fetch.** The single fetch wrapper (`src/fetch-utils.ts`) rejects any non-`http(s)` scheme, blocks loopback/private/link-local hosts, follows redirects manually one hop at a time, and bounds the chain at 5 hops and the response body at 10 MiB.
-- **Fleet mode with per-site reports.** `LLMScout fleet manifest.json` runs the full suite across many local client-repo paths in one invocation, and `--out-dir` writes one auto-named report file per site -- built for agencies checking many client sites at once.
+- **Fleet mode with per-site reports.** `llmscout fleet manifest.json` runs the full suite across many local client-repo paths in one invocation, and `--out-dir` writes one auto-named report file per site -- built for agencies checking many client sites at once.
 - **Structured output.** Every command accepts a global `--json` flag for machine-readable output, so an agent invoking the CLI can parse results programmatically.
 - **A real, configurable User-Agent.** Sends a genuine browser User-Agent by default (some SSR frameworks and CDNs reject bot-style strings outright) and a `--user-agent` flag to override it.
 - **Well tested.** 247 TypeScript tests and 233 Python tests, both `npm audit` and the Python build reporting zero vulnerabilities (reproducible locally with `npm run test:coverage` and `npm audit`).
@@ -87,11 +87,11 @@ Search traffic is genuinely shifting toward AI-mediated answers, and the shift i
 Scaffold a config and run a check against a live site:
 
 ```bash
-LLMScout init ./my-site --site-url https://example.com
-LLMScout check ./my-site
+llmscout init ./my-site --site-url https://example.com
+llmscout check ./my-site
 ```
 
-Real output from `LLMScout check` against `https://example.com`:
+Real output from `llmscout check` against `https://example.com`:
 
 ```
 LLMScout check -- https://example.com
@@ -180,7 +180,7 @@ Summary: 6 PASS, 14 WARN, 1 FAIL (21 checks)
 The same run with `--json`:
 
 ```bash
-LLMScout --json check ./my-site
+llmscout --json check ./my-site
 ```
 
 ```json
@@ -204,7 +204,7 @@ LLMScout --json check ./my-site
 }
 ```
 
-`check` exits `0` when no check FAILs, `1` when at least one check FAILs (WARN alone does not fail the run), and `2` on a usage error such as a missing or misconfigured `LLMScout.json`.
+`check` exits `0` when no check FAILs, `1` when at least one check FAILs (WARN alone does not fail the run), and `2` on a usage error such as a missing or misconfigured `llmscout.json`.
 
 ## The 21 checks
 
@@ -241,15 +241,15 @@ Each check reports `PASS`, `WARN`, or `FAIL`, with a fix suggestion for anything
 | Markdown content negotiation (`markdown-negotiation`) | Whether the site serves a `text/markdown` representation when requested via `Accept: text/markdown` content negotiation. |
 | Link header (`link-header`) | Whether the homepage response sends an RFC 8288 `Link` header for machine-readable service discovery. |
 
-You can run only one category by editing the `checks` block in `LLMScout.json` (`{ "checks": { "technical": true, "geo": false } }`).
+You can run only one category by editing the `checks` block in `llmscout.json` (`{ "checks": { "technical": true, "geo": false } }`).
 
 ## CLI reference
 
 Transcribed from the tool's own `--help` output.
 
 ```
-$ LLMScout --help
-Usage: LLMScout [options] [command]
+$ llmscout --help
+Usage: llmscout [options] [command]
 
 Zero-config, cross-platform SEO and GEO checks for local projects, with no
 Python or headless-browser dependency.
@@ -263,7 +263,7 @@ Options:
   -h, --help                     display help for command
 
 Commands:
-  init [options] <path>          Scaffold a LLMScout setup (LLMScout.json + a
+  init [options] <path>          Scaffold a LLMScout setup (llmscout.json + a
                                  Claude Code skill file) into a target
                                  directory
   check [options] <path>         Run SEO/GEO checks against a local project's
@@ -275,8 +275,8 @@ Commands:
 
 | Command | Argument | Options | Purpose |
 | --- | --- | --- | --- |
-| `init` | `<path>` target directory | `--site-url <url>` set `siteUrl` immediately | Scaffold `LLMScout.json` plus a Claude Code skill file. Idempotent: existing files are left untouched. |
-| `check` | `<path>` project directory containing `LLMScout.json` | `--out-dir <dir>` also write an auto-named report file for this site; (global `--json`, `--user-agent`) | Run the selected checks against the configured `siteUrl`. |
+| `init` | `<path>` target directory | `--site-url <url>` set `siteUrl` immediately | Scaffold `llmscout.json` plus a Claude Code skill file. Idempotent: existing files are left untouched. |
+| `check` | `<path>` project directory containing `llmscout.json` | `--out-dir <dir>` also write an auto-named report file for this site; (global `--json`, `--user-agent`) | Run the selected checks against the configured `siteUrl`. |
 | `fleet` | `<config.json>` fleet manifest | `--out-dir <dir>` also write one auto-named report file per site, named from the manifest's `name` field; (global `--json`, `--user-agent`) | Run the full suite against every site in the manifest. |
 
 `--json`, `--user-agent`, `-V`/`--version`, and `-h`/`--help` are the only global options.
@@ -287,11 +287,11 @@ Commands:
 | --- | --- |
 | `0` | `init` succeeded, or `check`/`fleet` completed with no FAIL. |
 | `1` | `check`: at least one check FAILed. `fleet`: at least one site FAILed or errored. |
-| `2` | Usage error: invalid URL scheme, missing/unreadable/invalid `LLMScout.json`, blank `siteUrl`, missing manifest, or any other configuration error. |
+| `2` | Usage error: invalid URL scheme, missing/unreadable/invalid `llmscout.json`, blank `siteUrl`, missing manifest, or any other configuration error. |
 
 ## Fleet mode
 
-![Running cat fleet.json to show a two-site manifest, then LLMScout fleet ./fleet.json checking both sites and printing a per-site PASS/FAIL summary](./docs/usage.gif)
+![Running cat fleet.json to show a two-site manifest, then llmscout fleet ./fleet.json checking both sites and printing a per-site PASS/FAIL summary](./docs/usage.gif)
 
 `fleet` is aimed at agencies or teams that maintain several client sites side by side as local repos. You declare each site in one manifest and check them all in a single command:
 
@@ -305,7 +305,7 @@ Commands:
 ```
 
 ```bash
-LLMScout fleet ./fleet.json
+llmscout fleet ./fleet.json
 ```
 
 ```
@@ -349,7 +349,7 @@ LLMScout is not a fork of either project. It shares no code with them, has a dif
 
 Beyond the install-fix wedge, LLMScout's checks track the concrete, evidence-backed direction the GEO space has actually moved since mid-2025 -- see [Why GEO checks matter right now](#why-geo-checks-matter-right-now) for the cited sources behind that claim, including the training-versus-search AI crawler split, Markdown content negotiation, and Google's own documented FAQ-rich-result deprecation.
 
-LLMScout is at v0.2. Both distributions are published: `pip install LLMScout-cli` (PyPI) and `npm install -g LLMScout-cli` (npm) -- see [Install](#install) for both paths.
+LLMScout is at v0.2. Both distributions are published: `pip install llmscout-cli` (PyPI) and `npm install -g llmscout-cli` (npm) -- see [Install](#install) for both paths.
 
 ## FAQ
 
@@ -360,7 +360,7 @@ No. The npm distribution is pure TypeScript/Node with two dependencies (`cheerio
 No, in either distribution. Both fetch HTML over `http(s)` and parse it (`cheerio` in TypeScript, the standard library in Python). There is no Chromium download and no subprocess call anywhere in either implementation's checks. The trade-off is that the content-extraction check reads static HTML only and cannot see JavaScript-rendered content. It says so in its own result message.
 
 **What does "zero-config" mean here, concretely?**
-`LLMScout init <path>` writes a working `LLMScout.json` and a Claude Code skill file with no prompts. The one value you must supply is your live site URL (via `--site-url` or by editing the file), because the tool cannot infer a project's public URL from its local files. After that, `LLMScout check <path>` runs with no further configuration; all 21 checks run by default.
+`llmscout init <path>` writes a working `llmscout.json` and a Claude Code skill file with no prompts. The one value you must supply is your live site URL (via `--site-url` or by editing the file), because the tool cannot infer a project's public URL from its local files. After that, `llmscout check <path>` runs with no further configuration; all 21 checks run by default.
 
 **Why does LLMScout track training crawlers and search crawlers separately?**
 Because OpenAI and Anthropic actually run them as separate, independently blockable user agents now. Blocking GPTBot (training) has no effect on whether OAI-SearchBot can still retrieve and cite your page live in a ChatGPT answer, and the same split applies to ClaudeBot versus Claude-SearchBot. Reporting them together would hide a real, actionable distinction.
@@ -372,13 +372,13 @@ No, it only reports whether one exists. `llms.txt` is a real, growing convention
 Their install/Windows bugs share a single root cause: checks are performed by shelling out to an external interpreter-plus-browser toolchain from skill instructions. Patching each symptom leaves that architecture in place. LLMScout removes the architecture instead: with no external toolchain, that class of install and path failure cannot recur. It is an independent reimplementation, not a patch.
 
 **Can I run it against many sites at once?**
-Yes. `LLMScout fleet manifest.json` runs the full suite against every site in a local JSON manifest in one invocation, and `--out-dir` writes one auto-named report file per site instead of one combined stdout dump -- built for agencies checking many client sites.
+Yes. `llmscout fleet manifest.json` runs the full suite against every site in a local JSON manifest in one invocation, and `--out-dir` writes one auto-named report file per site instead of one combined stdout dump -- built for agencies checking many client sites.
 
 **Can an agent or script consume the output?**
 Yes. Pass the global `--json` flag to any command for structured JSON, including per-check `id`, `status`, `message`, and `fix` fields, plus a summary object. Exit codes are stable: `0` clean, `1` at least one FAIL, `2` a usage/config error.
 
 **Is there a Python version?**
-Yes -- `pip install LLMScout-cli` installs a genuine, independent Python port (not a wrapper around the Node binary), with zero runtime dependencies. It runs the same 21 checks with the same PASS/WARN/FAIL verdicts as this npm package. See [python/README.md](./python/README.md).
+Yes -- `pip install llmscout-cli` installs a genuine, independent Python port (not a wrapper around the Node binary), with zero runtime dependencies. It runs the same 21 checks with the same PASS/WARN/FAIL verdicts as this npm package. See [python/README.md](./python/README.md).
 
 **Can I use LLMScout commercially, or in a closed-source project?**
 Yes. Both distributions are MIT licensed (see [LICENSE](./LICENSE)): you can use, modify, and redistribute LLMScout in commercial and closed-source work, with no royalty and no obligation to open-source anything it checks. The only requirement is keeping the copyright notice and license text if you redistribute the source itself.
@@ -398,7 +398,7 @@ npm run lint        # eslint src test
 
 CI (`.github/workflows/ci.yml`) runs lint, typecheck, build, coverage, and `npm audit --audit-level=high` on every push and pull request to `main`. Issues and pull requests are welcome at <https://github.com/RudrenduPaul/LLMScout/issues>.
 
-Adding a 22nd check is intentionally small: implement the `Check` interface (`src/types.ts`) in a new file under `src/checks/`, then register it in `src/checks/index.ts` (and the Python equivalent under `python/src/LLMScout/checks/`, per [CONTRIBUTING.md](./CONTRIBUTING.md)).
+Adding a 22nd check is intentionally small: implement the `Check` interface (`src/types.ts`) in a new file under `src/checks/`, then register it in `src/checks/index.ts` (and the Python equivalent under `python/src/llmscout/checks/`, per [CONTRIBUTING.md](./CONTRIBUTING.md)).
 
 ## License
 

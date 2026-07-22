@@ -4,7 +4,7 @@ import { LLMScoutError } from "./errors.js";
 import { ALL_CHECKS, GEO_CHECKS, TECHNICAL_CHECKS } from "./checks/index.js";
 import type { Check } from "./types.js";
 
-export const CONFIG_FILENAME = "LLMScout.json";
+export const CONFIG_FILENAME = "llmscout.json";
 
 export interface LLMScoutConfig {
   /**
@@ -31,7 +31,7 @@ export function configPath(projectPath: string): string {
 }
 
 /**
- * Loads and validates a project's LLMScout.json. Every failure mode here
+ * Loads and validates a project's llmscout.json. Every failure mode here
  * (missing file, malformed JSON, missing/blank siteUrl) is a usage error
  * (exit code 2), not a check failure -- the check suite never even starts.
  */
@@ -40,7 +40,7 @@ export function loadConfig(projectPath: string): LLMScoutConfig {
 
   if (!existsSync(file)) {
     throw new LLMScoutError(
-      `No ${CONFIG_FILENAME} found in "${projectPath}". Run \`LLMScout init ${projectPath}\` first.`,
+      `No ${CONFIG_FILENAME} found in "${projectPath}". Run \`llmscout init ${projectPath}\` first.`,
       2,
     );
   }

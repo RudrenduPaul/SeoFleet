@@ -2,7 +2,7 @@
 cheerio provided this directly on that side)."""
 from __future__ import annotations
 
-from LLMScout.html_util import get_link_href, get_meta_content, get_meta_property, get_scripts_by_type, parse_html
+from llmscout.html_util import get_link_href, get_meta_content, get_meta_property, get_scripts_by_type, parse_html
 
 
 def test_void_tags_do_not_swallow_siblings():

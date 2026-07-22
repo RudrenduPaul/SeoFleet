@@ -9,7 +9,7 @@ import { LLMScoutError } from "../src/errors.js";
 let dir: string;
 
 beforeEach(() => {
-  dir = mkdtempSync(path.join(tmpdir(), "LLMScout-init-"));
+  dir = mkdtempSync(path.join(tmpdir(), "llmscout-init-"));
 });
 
 afterEach(() => {
@@ -17,7 +17,7 @@ afterEach(() => {
 });
 
 describe("initProject", () => {
-  it("creates LLMScout.json and a Claude Code skill file", () => {
+  it("creates llmscout.json and a Claude Code skill file", () => {
     const result = initProject(dir);
     expect(result.configCreated).toBe(true);
     expect(result.skillCreated).toBe(true);

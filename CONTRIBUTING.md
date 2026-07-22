@@ -1,8 +1,8 @@
 # Contributing to LLMScout
 
 LLMScout ships two independently maintained, equally first-class
-distributions of the same 21-check tool: an npm package (`LLMScout-cli`,
-TypeScript, repo root) and a PyPI package (`LLMScout-cli`, Python,
+distributions of the same 21-check tool: an npm package (`llmscout-cli`,
+TypeScript, repo root) and a PyPI package (`llmscout-cli`, Python,
 `python/`). Both run the same 21 checks (12 technical-SEO, 9 GEO) and are
 expected to produce the same PASS/WARN/FAIL verdicts against the same
 target site. Please read this whole file before opening a PR -- which
@@ -14,7 +14,7 @@ section applies depends on which codebase you're touching.
   -- both are the mechanism that keeps the two implementations in parity.
 - A check-behavior change (a new threshold, a changed status, a changed
   message) must be made in **both** `src/checks/` (TypeScript) and
-  `python/src/LLMScout/checks/` (Python), with equivalent test coverage
+  `python/src/llmscout/checks/` (Python), with equivalent test coverage
   added to both suites. A check that only exists in one language is a
   silent behavior gap between the two CLIs -- avoid it.
 - Messages, fix text, and exit codes should read identically between the
@@ -39,7 +39,7 @@ npm run lint
 - Tests use `vitest` (`test/**/*.test.ts`, one file per module, plus
   `test/test-helpers.ts` for shared fixtures and a fetch stub).
 - `npm run build` compiles to `dist/`, which is what the `bin` entry
-  (`LLMScout`) resolves to.
+  (`llmscout`) resolves to.
 
 ## Working on the Python package (`python/`)
 
@@ -50,7 +50,7 @@ pip install -e ".[dev]"
 pytest
 ```
 
-- Source lives under `python/src/LLMScout/`, laid out to mirror the
+- Source lives under `python/src/llmscout/`, laid out to mirror the
   TypeScript module structure 1:1 (`checks/technical/`, `checks/geo/`,
   `fetch_utils.py`, `config.py`, `fleet.py`, `runner.py`, `format.py`,
   `init.py`, `cli.py`, `cli_lib.py`, `types.py`, `errors.py`) so a change
@@ -65,11 +65,11 @@ pytest
   packaging. Build the venv **outside** `python/` so it never gets swept
   into the sdist:
   ```bash
-  python3 -m venv /tmp/LLMScout-verify-venv
-  /tmp/LLMScout-verify-venv/bin/pip install build
-  /tmp/LLMScout-verify-venv/bin/python3 -m build python --outdir python/dist
-  /tmp/LLMScout-verify-venv/bin/pip install python/dist/*.whl
-  /tmp/LLMScout-verify-venv/bin/LLMScout check <some-project-dir>
+  python3 -m venv /tmp/llmscout-verify-venv
+  /tmp/llmscout-verify-venv/bin/pip install build
+  /tmp/llmscout-verify-venv/bin/python3 -m build python --outdir python/dist
+  /tmp/llmscout-verify-venv/bin/pip install python/dist/*.whl
+  /tmp/llmscout-verify-venv/bin/llmscout check <some-project-dir>
   ```
 
 ## Adding a 13th check
@@ -79,9 +79,9 @@ Adding a check is intentionally small on both sides:
 - **TypeScript**: implement the `Check` interface (`src/types.ts`) in a
   new file under `src/checks/technical/` or `src/checks/geo/`, then
   register it in `src/checks/index.ts`.
-- **Python**: build a `Check` (`LLMScout.types.Check`) in a new module
-  under `python/src/LLMScout/checks/technical/` or `.../checks/geo/`, then
-  register it in `python/src/LLMScout/checks/__init__.py`.
+- **Python**: build a `Check` (`llmscout.types.Check`) in a new module
+  under `python/src/llmscout/checks/technical/` or `.../checks/geo/`, then
+  register it in `python/src/llmscout/checks/__init__.py`.
 
 Add the same check, with the same id/name/category/thresholds, to both
 sides in the same PR, with tests in both suites.

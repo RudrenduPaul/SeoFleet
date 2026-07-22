@@ -1,15 +1,15 @@
 """
 Programmatic / agent-native entry point.
 
-    from LLMScout import load_site, run_checks, select_checks, ALL_CHECKS
+    from llmscout import load_site, run_checks, select_checks, ALL_CHECKS
 
     ctx = load_site("https://example.com")
     results = run_checks(ALL_CHECKS, ctx)
     for r in results:
         print(r.status, r.name, r.message)
 
-This is the Python port of the LLMScout-cli npm package
-(https://www.npmjs.com/package/LLMScout-cli). Both distributions run the
+This is the Python port of the llmscout-cli npm package
+(https://www.npmjs.com/package/llmscout-cli). Both distributions run the
 same 12 technical-SEO/GEO checks; see
 https://github.com/RudrenduPaul/LLMScout for the canonical documentation,
 comparison table, and the original TypeScript source.

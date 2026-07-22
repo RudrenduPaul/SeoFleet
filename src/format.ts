@@ -87,7 +87,7 @@ export function formatInitResultText(result: InitResult): string {
       : `${result.skillFile} already exists, left untouched`,
   );
   if (result.configCreated) {
-    lines.push("", "Next: edit siteUrl in the config file above, then run `LLMScout check <path>`.");
+    lines.push("", "Next: edit siteUrl in the config file above, then run `llmscout check <path>`.");
   }
   return lines.join("\n");
 }

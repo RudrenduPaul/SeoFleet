@@ -1,18 +1,26 @@
 {
-  "name": "LLMScout-cli",
-  "version": "0.2.1",
-  "description": "Zero-config, cross-platform SEO and GEO (generative engine optimization) checks for local projects and multi-site agency fleets, in pure TypeScript with no Python or headless-browser dependency.",
+  "name": "llmscout-cli",
+  "version": "0.3.0",
+  "description": "Zero-dependency, cross-platform LLM/GEO/AEO checker CLI — 21 technical-SEO and generative-engine-optimization checks, no headless browser, no Python interpreter required.",
   "keywords": [
-    "seo",
+    "llm",
     "geo",
+    "aeo",
+    "seo",
+    "generative-engine-optimization",
+    "answer-engine-optimization",
+    "ai-seo",
+    "llms-txt",
+    "technical-seo",
     "cli",
-    "agent-native",
-    "claude-code",
-    "windows",
-    "cross-platform",
-    "agency",
     "typescript",
-    "developer-tools"
+    "cross-platform",
+    "ai-visibility",
+    "llm-optimization",
+    "chatgpt",
+    "perplexity",
+    "claude",
+    "google-ai-overviews"
   ],
   "homepage": "https://github.com/RudrenduPaul/LLMScout#readme",
   "bugs": {
@@ -26,7 +34,7 @@
   "author": "Rudrendu Paul",
   "type": "module",
   "bin": {
-    "LLMScout": "dist/cli.js"
+    "llmscout": "dist/cli.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

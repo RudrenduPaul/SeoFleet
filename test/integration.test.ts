@@ -8,7 +8,7 @@ import { GOOD_HTML, GOOD_ROBOTS_TXT, GOOD_SITEMAP_XML, makeFetchStub } from "./t
 let scratch: string;
 
 beforeEach(() => {
-  scratch = mkdtempSync(path.join(tmpdir(), "LLMScout-integration-"));
+  scratch = mkdtempSync(path.join(tmpdir(), "llmscout-integration-"));
 });
 
 afterEach(() => {
@@ -21,10 +21,10 @@ describe("init -> check end-to-end against a scratch directory", () => {
 
     const initResult = runInitCommand(project, { siteUrl: "https://good.example/", json: false });
     expect(initResult.exitCode).toBe(0);
-    expect(existsSync(path.join(project, "LLMScout.json"))).toBe(true);
-    expect(existsSync(path.join(project, ".claude", "skills", "LLMScout", "SKILL.md"))).toBe(true);
+    expect(existsSync(path.join(project, "llmscout.json"))).toBe(true);
+    expect(existsSync(path.join(project, ".claude", "skills", "llmscout", "SKILL.md"))).toBe(true);
 
-    const config = JSON.parse(readFileSync(path.join(project, "LLMScout.json"), "utf-8"));
+    const config = JSON.parse(readFileSync(path.join(project, "llmscout.json"), "utf-8"));
     expect(config.siteUrl).toBe("https://good.example/");
 
     const fetchStub = makeFetchStub({
@@ -66,7 +66,7 @@ describe("fleet against a multi-path scratch fixture", () => {
       const clientDir = path.join(scratch, "clients", name);
       mkdirSync(clientDir, { recursive: true });
       const siteUrl = `https://${name}.example/`;
-      writeFileSync(path.join(clientDir, "LLMScout.json"), JSON.stringify({ siteUrl }), "utf-8");
+      writeFileSync(path.join(clientDir, "llmscout.json"), JSON.stringify({ siteUrl }), "utf-8");
     }
 
     const manifestFile = path.join(scratch, "fleet.json");

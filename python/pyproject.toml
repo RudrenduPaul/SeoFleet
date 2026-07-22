@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "LLMScout-cli"
-version = "0.2.1"
-description = "Zero-config, cross-platform SEO and GEO (generative engine optimization) checker: 12 checks against a live site, plus multi-site fleet mode, in pure Python with no extra runtime toolchain."
+name = "llmscout-cli"
+version = "0.3.0"
+description = "Zero-dependency, cross-platform LLM/GEO/AEO checker CLI — 21 checks, pure Python stdlib, no runtime dependencies."
 readme = "README.md"
 requires-python = ">=3.9"
 license = "MIT"
@@ -13,9 +13,11 @@ authors = [
   { name = "Rudrendu Paul" },
   { name = "Sourav Nandy" },
 ]
-keywords = ["seo", "geo", "generative-engine-optimization", "cli", "agent-native", "website-audit", "developer-tools"]
+keywords = ["llm", "geo", "aeo", "seo", "generative-engine-optimization",
+            "answer-engine-optimization", "ai-seo", "llms-txt", "cli",
+            "technical-seo", "ai-visibility", "llm-optimization"]
 classifiers = [
-  "Development Status :: 3 - Alpha",
+  "Development Status :: 4 - Beta",
   "Environment :: Console",
   "Intended Audience :: Developers",
   "License :: OSI Approved :: MIT License",
@@ -48,14 +50,14 @@ Documentation = "https://github.com/RudrenduPaul/LLMScout/blob/main/docs/getting
 "Author - Sourav Nandy" = "https://github.com/Sourav-nandy-ai"
 
 [project.scripts]
-LLMScout = "LLMScout.cli:main"
+llmscout = "llmscout.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/LLMScout"]
+packages = ["src/llmscout"]
 
 [tool.hatch.build.targets.sdist]
 include = [
-  "src/LLMScout",
+  "src/llmscout",
   "tests",
   "README.md",
   "LICENSE",

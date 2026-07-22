@@ -1,8 +1,8 @@
 """Ported from test/runner.test.ts."""
 from __future__ import annotations
 
-from LLMScout.runner import has_failure, run_checks
-from LLMScout.types import Check, CheckResult
+from llmscout.runner import has_failure, run_checks
+from llmscout.types import Check, CheckResult
 
 from .conftest import make_check_context
 

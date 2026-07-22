@@ -93,7 +93,7 @@ def run_fleet(
     Runs the full check suite against every site in a fleet manifest, local
     filesystem only -- each entry's `path` is read directly with
     `load_config` and its checks are run against the URL that path's own
-    LLMScout.json declares. There is no SSH, no remote execution, and no
+    llmscout.json declares. There is no SSH, no remote execution, and no
     network surface beyond the individual checks' own URL fetches.
 
     When `out_dir` is set, also writes one auto-named report file per
@@ -103,7 +103,7 @@ def run_fleet(
     naming each one. The filename stem is derived from the manifest
     entry's own `name` field, not the site's URL, since that's the
     identifier the fleet operator chose. Sites that error before producing
-    check results (e.g. a missing LLMScout.json) are not written -- there's
+    check results (e.g. a missing llmscout.json) are not written -- there's
     nothing to report yet.
     """
     # Deferred to break the fleet.py <-> format.py circular import (see the

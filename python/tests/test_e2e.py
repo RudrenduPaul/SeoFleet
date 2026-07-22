@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 
-from LLMScout.cli_lib import run_check_command, run_init_command
+from llmscout.cli_lib import run_check_command, run_init_command
 
 from .conftest import GOOD_HTML, GOOD_ROBOTS_TXT, GOOD_SITEMAP_XML, make_fetch_stub
 
@@ -19,10 +19,10 @@ def test_init_then_check_end_to_end(tmp_path):
 
     init_result = run_init_command(str(project), "https://good.example/", json_output=False)
     assert init_result.exit_code == 0
-    assert (project / "LLMScout.json").exists()
-    assert (project / ".claude" / "skills" / "LLMScout" / "SKILL.md").exists()
+    assert (project / "llmscout.json").exists()
+    assert (project / ".claude" / "skills" / "llmscout" / "SKILL.md").exists()
 
-    config = json.loads((project / "LLMScout.json").read_text())
+    config = json.loads((project / "llmscout.json").read_text())
     assert config["siteUrl"] == "https://good.example/"
 
     fetch_stub = make_fetch_stub(

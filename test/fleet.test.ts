@@ -9,7 +9,7 @@ import { GOOD_HTML, GOOD_ROBOTS_TXT, GOOD_SITEMAP_XML, makeFetchStub } from "./t
 let dir: string;
 
 beforeEach(() => {
-  dir = mkdtempSync(path.join(tmpdir(), "LLMScout-fleet-"));
+  dir = mkdtempSync(path.join(tmpdir(), "llmscout-fleet-"));
 });
 
 afterEach(() => {
@@ -57,8 +57,8 @@ describe("runFleet", () => {
     const clientB = path.join(dir, "client-b");
     mkdirSync(clientA, { recursive: true });
     mkdirSync(clientB, { recursive: true });
-    writeFileSync(path.join(clientA, "LLMScout.json"), JSON.stringify({ siteUrl: "https://good.example/" }), "utf-8");
-    writeFileSync(path.join(clientB, "LLMScout.json"), JSON.stringify({ siteUrl: "https://bad.example/" }), "utf-8");
+    writeFileSync(path.join(clientA, "llmscout.json"), JSON.stringify({ siteUrl: "https://good.example/" }), "utf-8");
+    writeFileSync(path.join(clientB, "llmscout.json"), JSON.stringify({ siteUrl: "https://bad.example/" }), "utf-8");
 
     const manifestFile = writeManifest("fleet.json", {
       sites: [
@@ -86,15 +86,15 @@ describe("runFleet", () => {
     expect(b?.ok).toBe(false);
   });
 
-  it("captures a per-site error (e.g. missing LLMScout.json) without aborting the rest of the fleet", async () => {
+  it("captures a per-site error (e.g. missing llmscout.json) without aborting the rest of the fleet", async () => {
     const clientA = path.join(dir, "client-a");
-    mkdirSync(clientA, { recursive: true }); // no LLMScout.json written
+    mkdirSync(clientA, { recursive: true }); // no llmscout.json written
     const manifestFile = writeManifest("fleet.json", { sites: [{ name: "client-a", path: "./client-a" }] });
 
     const results = await runFleet(manifestFile, makeFetchStub({}));
     expect(results).toHaveLength(1);
     expect(results[0]?.ok).toBe(false);
-    expect(results[0]?.error).toMatch(/Run `LLMScout init/);
+    expect(results[0]?.error).toMatch(/Run `llmscout init/);
   });
 
   it("writes one auto-named report .txt file per site into outDir, named from the manifest's own name field", async () => {
@@ -102,8 +102,8 @@ describe("runFleet", () => {
     const clientB = path.join(dir, "client-b");
     mkdirSync(clientA, { recursive: true });
     mkdirSync(clientB, { recursive: true });
-    writeFileSync(path.join(clientA, "LLMScout.json"), JSON.stringify({ siteUrl: "https://good.example/" }), "utf-8");
-    writeFileSync(path.join(clientB, "LLMScout.json"), JSON.stringify({ siteUrl: "https://bad.example/" }), "utf-8");
+    writeFileSync(path.join(clientA, "llmscout.json"), JSON.stringify({ siteUrl: "https://good.example/" }), "utf-8");
+    writeFileSync(path.join(clientB, "llmscout.json"), JSON.stringify({ siteUrl: "https://bad.example/" }), "utf-8");
 
     const manifestFile = writeManifest("fleet.json", {
       sites: [
@@ -135,7 +135,7 @@ describe("runFleet", () => {
   it("writes .json report files when json:true is passed", async () => {
     const clientA = path.join(dir, "client-a");
     mkdirSync(clientA, { recursive: true });
-    writeFileSync(path.join(clientA, "LLMScout.json"), JSON.stringify({ siteUrl: "https://good.example/" }), "utf-8");
+    writeFileSync(path.join(clientA, "llmscout.json"), JSON.stringify({ siteUrl: "https://good.example/" }), "utf-8");
     const manifestFile = writeManifest("fleet.json", { sites: [{ name: "client-a", path: "./client-a" }] });
     const fetchStub = makeFetchStub({
       "https://good.example/": { body: GOOD_HTML },
@@ -165,7 +165,7 @@ describe("runFleet", () => {
   it("does not write any report files when outDir is not passed", async () => {
     const clientA = path.join(dir, "client-a");
     mkdirSync(clientA, { recursive: true });
-    writeFileSync(path.join(clientA, "LLMScout.json"), JSON.stringify({ siteUrl: "https://good.example/" }), "utf-8");
+    writeFileSync(path.join(clientA, "llmscout.json"), JSON.stringify({ siteUrl: "https://good.example/" }), "utf-8");
     const manifestFile = writeManifest("fleet.json", { sites: [{ name: "client-a", path: "./client-a" }] });
     const fetchStub = makeFetchStub({
       "https://good.example/": { body: GOOD_HTML },

@@ -1,7 +1,7 @@
 """Ported from test/site-resources.test.ts."""
 from __future__ import annotations
 
-from LLMScout.site_resources import build_check_context, fetch_site_resources, parse_sitemap_directives
+from llmscout.site_resources import build_check_context, fetch_site_resources, parse_sitemap_directives
 
 from .conftest import (
     GOOD_HTML,
