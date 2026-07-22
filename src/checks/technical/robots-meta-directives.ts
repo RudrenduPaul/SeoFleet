@@ -18,7 +18,7 @@ export const robotsMetaDirectivesCheck: Check = {
         ...base,
         status: "FAIL",
         message: "Homepage could not be fetched, so meta robots directives could not be checked.",
-        fix: "Confirm siteUrl in LLMScout.json is correct and reachable.",
+        fix: "Confirm siteUrl in llmscout.json is correct and reachable.",
       };
     }
 

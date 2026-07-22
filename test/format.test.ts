@@ -69,16 +69,16 @@ describe("formatFleetResultsJson", () => {
 
 const initResult: InitResult = {
   projectPath: "/proj",
-  configFile: "/proj/LLMScout.json",
+  configFile: "/proj/llmscout.json",
   configCreated: true,
-  skillFile: "/proj/.claude/skills/LLMScout/SKILL.md",
+  skillFile: "/proj/.claude/skills/llmscout/SKILL.md",
   skillCreated: true,
 };
 
 describe("formatInitResultText", () => {
   it("reports what was created and next steps when the config is new", () => {
     const text = formatInitResultText(initResult);
-    expect(text).toContain("Created /proj/LLMScout.json");
+    expect(text).toContain("Created /proj/llmscout.json");
     expect(text).toContain("Next:");
   });
 

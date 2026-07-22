@@ -28,7 +28,7 @@ export const faqSchemaCheck: Check = {
         ...base,
         status: "FAIL",
         message: "Homepage could not be fetched, so FAQ schema could not be checked.",
-        fix: "Confirm siteUrl in LLMScout.json is correct and reachable.",
+        fix: "Confirm siteUrl in llmscout.json is correct and reachable.",
       };
     }
 

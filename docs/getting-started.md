@@ -3,8 +3,8 @@
 LLMScout checks a site for 21 technical-SEO and GEO (generative-engine-
 optimization) issues and reports PASS/WARN/FAIL per check, with a fix
 suggestion for anything short of a clean pass. It ships as two
-independent, equally first-class packages: an npm package (`LLMScout-cli`,
-JavaScript/TypeScript) and a PyPI package (`LLMScout-cli`, Python). Pick
+independent, equally first-class packages: an npm package (`llmscout-cli`,
+JavaScript/TypeScript) and a PyPI package (`llmscout-cli`, Python). Pick
 whichever fits your toolchain, or install both.
 
 ## Install
@@ -12,27 +12,27 @@ whichever fits your toolchain, or install both.
 **npm (JS/TS CLI):**
 
 ```bash
-npm install -g LLMScout-cli
+npm install -g llmscout-cli
 ```
 
 **pip (Python CLI + library):**
 
 ```bash
-pip install LLMScout-cli
+pip install llmscout-cli
 ```
 
 The Python package has **zero runtime dependencies** -- HTML parsing and
 HTTP fetching both use only the standard library, so `pip install
-LLMScout-cli` pulls in nothing else.
+llmscout-cli` pulls in nothing else.
 
 ## Your first check
 
 ```bash
-LLMScout init ./my-site --site-url https://example.com
-LLMScout check ./my-site
+llmscout init ./my-site --site-url https://example.com
+llmscout check ./my-site
 ```
 
-`init` scaffolds a `LLMScout.json` (and a Claude Code skill file) in the
+`init` scaffolds a `llmscout.json` (and a Claude Code skill file) in the
 target directory; it is idempotent, so re-running it never clobbers an
 already-configured `siteUrl`. `check` runs all 21 checks against the
 configured `siteUrl` and prints one PASS/WARN/FAIL line per check.
@@ -61,7 +61,7 @@ Summary: 6 PASS, 14 WARN, 1 FAIL (21 checks)
 
 `check` exits `0` when no check FAILs, `1` when at least one check FAILs
 (WARN alone never fails the run), and `2` on a usage error (a missing or
-misconfigured `LLMScout.json`, an invalid URL scheme).
+misconfigured `llmscout.json`, an invalid URL scheme).
 
 ## Using the library instead of the CLI
 
@@ -71,7 +71,7 @@ want to call LLMScout in-process instead of shelling out to a CLI binary.
 **TypeScript:**
 
 ```ts
-import { loadSite, runChecks, ALL_CHECKS } from 'LLMScout-cli';
+import { loadSite, runChecks, ALL_CHECKS } from 'llmscout-cli';
 
 const ctx = await loadSite('https://example.com');
 const results = await runChecks(ALL_CHECKS, ctx);
@@ -80,7 +80,7 @@ const results = await runChecks(ALL_CHECKS, ctx);
 **Python:**
 
 ```python
-from LLMScout import load_site, run_checks, ALL_CHECKS
+from llmscout import load_site, run_checks, ALL_CHECKS
 
 ctx = load_site("https://example.com")
 results = run_checks(ALL_CHECKS, ctx)

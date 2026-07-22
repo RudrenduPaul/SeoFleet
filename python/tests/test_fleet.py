@@ -6,8 +6,8 @@ import os
 
 import pytest
 
-from LLMScout.errors import LLMScoutError
-from LLMScout.fleet import load_fleet_manifest, run_fleet
+from llmscout.errors import LLMScoutError
+from llmscout.fleet import load_fleet_manifest, run_fleet
 
 from .conftest import GOOD_HTML, GOOD_ROBOTS_TXT, GOOD_SITEMAP_XML, make_fetch_stub
 
@@ -57,7 +57,7 @@ def test_run_fleet_reports_error_for_bad_site_config(tmp_path):
 def test_run_fleet_runs_checks_for_valid_site(tmp_path):
     site_dir = tmp_path / "clients" / "a"
     site_dir.mkdir(parents=True)
-    (site_dir / "LLMScout.json").write_text(json.dumps({"siteUrl": "https://acme.example/"}))
+    (site_dir / "llmscout.json").write_text(json.dumps({"siteUrl": "https://acme.example/"}))
     manifest = tmp_path / "fleet.json"
     manifest.write_text(json.dumps({"sites": [{"name": "a", "path": "./clients/a"}]}))
 
@@ -71,7 +71,7 @@ def test_run_fleet_runs_checks_for_valid_site(tmp_path):
 
 def _write_client_config(client_dir, site_url: str) -> None:
     client_dir.mkdir(parents=True)
-    (client_dir / "LLMScout.json").write_text(json.dumps({"siteUrl": site_url}))
+    (client_dir / "llmscout.json").write_text(json.dumps({"siteUrl": site_url}))
 
 
 def test_run_fleet_writes_one_txt_report_file_per_site_named_from_manifest_name(tmp_path):

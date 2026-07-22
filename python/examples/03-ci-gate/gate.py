@@ -2,7 +2,7 @@
 """
 03 -- CI gate.
 
-Demonstrates using the LLMScout library as an actual CI gate script: takes
+Demonstrates using the llmscout library as an actual CI gate script: takes
 a site URL from the command line (falling back to https://example.com so
 it's runnable with zero arguments), prints a summary, and propagates the
 real check exit-code convention (0 clean / 1 any FAIL) as the process exit
@@ -16,7 +16,7 @@ Run:
 """
 import sys
 
-from LLMScout import ALL_CHECKS, has_failure, load_site, run_checks
+from llmscout import ALL_CHECKS, has_failure, load_site, run_checks
 
 
 def main() -> int:

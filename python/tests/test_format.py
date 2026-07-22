@@ -3,10 +3,10 @@ from __future__ import annotations
 
 import json
 
-from LLMScout.format import format_check_results_json, format_check_results_text, summarize_results
-from LLMScout.init import InitResult
-from LLMScout.format import format_init_result_json, format_init_result_text
-from LLMScout.types import CheckResult
+from llmscout.format import format_check_results_json, format_check_results_text, summarize_results
+from llmscout.init import InitResult
+from llmscout.format import format_init_result_json, format_init_result_text
+from llmscout.types import CheckResult
 
 
 def _sample_results():
@@ -41,21 +41,21 @@ def test_format_check_results_json_omits_fix_when_absent():
 
 
 def test_format_init_result_text_created():
-    result = InitResult("proj", "proj/LLMScout.json", True, "proj/.claude/skills/LLMScout/SKILL.md", True)
+    result = InitResult("proj", "proj/llmscout.json", True, "proj/.claude/skills/llmscout/SKILL.md", True)
     text = format_init_result_text(result)
-    assert "Created proj/LLMScout.json" in text
+    assert "Created proj/llmscout.json" in text
     assert "Next:" in text
 
 
 def test_format_init_result_text_already_exists():
-    result = InitResult("proj", "proj/LLMScout.json", False, "proj/.claude/skills/LLMScout/SKILL.md", False)
+    result = InitResult("proj", "proj/llmscout.json", False, "proj/.claude/skills/llmscout/SKILL.md", False)
     text = format_init_result_text(result)
     assert "already exists, left untouched" in text
     assert "Next:" not in text
 
 
 def test_format_init_result_json_roundtrips():
-    result = InitResult("proj", "proj/LLMScout.json", True, "proj/skill.md", True)
+    result = InitResult("proj", "proj/llmscout.json", True, "proj/skill.md", True)
     payload = json.loads(format_init_result_json(result))
     assert payload["projectPath"] == "proj"
     assert payload["configCreated"] is True

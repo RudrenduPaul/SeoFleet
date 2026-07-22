@@ -8,7 +8,7 @@ import { GOOD_HTML, GOOD_ROBOTS_TXT, GOOD_SITEMAP_XML, makeFetchStub } from "./t
 let dir: string;
 
 beforeEach(() => {
-  dir = mkdtempSync(path.join(tmpdir(), "LLMScout-cli-lib-"));
+  dir = mkdtempSync(path.join(tmpdir(), "llmscout-cli-lib-"));
 });
 
 afterEach(() => {
@@ -42,14 +42,14 @@ describe("runCheckCommand", () => {
     expect(result.stderr).toMatch(/is not a directory/);
   });
 
-  it("returns exit code 2 when LLMScout.json is missing", async () => {
+  it("returns exit code 2 when llmscout.json is missing", async () => {
     const result = await runCheckCommand(dir, { json: false });
     expect(result.exitCode).toBe(2);
-    expect(result.stderr).toMatch(/Run `LLMScout init/);
+    expect(result.stderr).toMatch(/Run `llmscout init/);
   });
 
   it("returns exit code 0 when every check passes", async () => {
-    writeFileSync(path.join(dir, "LLMScout.json"), JSON.stringify({ siteUrl: "https://good.example/" }), "utf-8");
+    writeFileSync(path.join(dir, "llmscout.json"), JSON.stringify({ siteUrl: "https://good.example/" }), "utf-8");
     const fetchStub = makeFetchStub({
       "https://good.example/": { body: GOOD_HTML },
       "https://good.example/robots.txt": { body: GOOD_ROBOTS_TXT },
@@ -63,7 +63,7 @@ describe("runCheckCommand", () => {
   });
 
   it("returns exit code 1 when at least one check fails", async () => {
-    writeFileSync(path.join(dir, "LLMScout.json"), JSON.stringify({ siteUrl: "https://bad.example/" }), "utf-8");
+    writeFileSync(path.join(dir, "llmscout.json"), JSON.stringify({ siteUrl: "https://bad.example/" }), "utf-8");
     const fetchStub = makeFetchStub({
       "https://bad.example/": { status: 500, ok: false },
       "https://bad.example/robots.txt": { status: 404, ok: false },
@@ -76,7 +76,7 @@ describe("runCheckCommand", () => {
   });
 
   it("sends the --user-agent override on every outbound fetch when no fetchFn stub is given", async () => {
-    writeFileSync(path.join(dir, "LLMScout.json"), JSON.stringify({ siteUrl: "https://good.example/" }), "utf-8");
+    writeFileSync(path.join(dir, "llmscout.json"), JSON.stringify({ siteUrl: "https://good.example/" }), "utf-8");
     const seenUserAgents: (string | null)[] = [];
     vi.stubGlobal(
       "fetch",
@@ -95,7 +95,7 @@ describe("runCheckCommand", () => {
   });
 
   it("prefers an explicit fetchFn stub over the --user-agent override", async () => {
-    writeFileSync(path.join(dir, "LLMScout.json"), JSON.stringify({ siteUrl: "https://good.example/" }), "utf-8");
+    writeFileSync(path.join(dir, "llmscout.json"), JSON.stringify({ siteUrl: "https://good.example/" }), "utf-8");
     const fetchStub = makeFetchStub({
       "https://good.example/": { body: GOOD_HTML },
       "https://good.example/robots.txt": { body: GOOD_ROBOTS_TXT },
@@ -107,7 +107,7 @@ describe("runCheckCommand", () => {
   });
 
   it("writes an auto-named report file into --out-dir and notes the path on stderr", async () => {
-    writeFileSync(path.join(dir, "LLMScout.json"), JSON.stringify({ siteUrl: "https://good.example/" }), "utf-8");
+    writeFileSync(path.join(dir, "llmscout.json"), JSON.stringify({ siteUrl: "https://good.example/" }), "utf-8");
     const fetchStub = makeFetchStub({
       "https://good.example/": { body: GOOD_HTML },
       "https://good.example/robots.txt": { body: GOOD_ROBOTS_TXT },
@@ -125,7 +125,7 @@ describe("runCheckCommand", () => {
   });
 
   it("writes a .json report file into --out-dir when json:true, without corrupting stdout JSON", async () => {
-    writeFileSync(path.join(dir, "LLMScout.json"), JSON.stringify({ siteUrl: "https://good.example/" }), "utf-8");
+    writeFileSync(path.join(dir, "llmscout.json"), JSON.stringify({ siteUrl: "https://good.example/" }), "utf-8");
     const fetchStub = makeFetchStub({
       "https://good.example/": { body: GOOD_HTML },
       "https://good.example/robots.txt": { body: GOOD_ROBOTS_TXT },
@@ -150,7 +150,7 @@ describe("runFleetCommand", () => {
     writeFileSync(path.join(dir, "fleet.json"), JSON.stringify({ sites: [{ name: "a", path: "./client-a" }] }), "utf-8");
     const fs = await import("node:fs");
     fs.mkdirSync(clientA, { recursive: true });
-    fs.writeFileSync(path.join(clientA, "LLMScout.json"), JSON.stringify({ siteUrl: "https://good.example/" }), "utf-8");
+    fs.writeFileSync(path.join(clientA, "llmscout.json"), JSON.stringify({ siteUrl: "https://good.example/" }), "utf-8");
 
     const fetchStub = makeFetchStub({
       "https://good.example/": { body: GOOD_HTML },
@@ -170,7 +170,7 @@ describe("runFleetCommand", () => {
     writeFileSync(path.join(dir, "fleet.json"), JSON.stringify({ sites: [{ name: "client-a", path: "./client-a" }] }), "utf-8");
     const fs = await import("node:fs");
     fs.mkdirSync(clientA, { recursive: true });
-    fs.writeFileSync(path.join(clientA, "LLMScout.json"), JSON.stringify({ siteUrl: "https://good.example/" }), "utf-8");
+    fs.writeFileSync(path.join(clientA, "llmscout.json"), JSON.stringify({ siteUrl: "https://good.example/" }), "utf-8");
 
     const fetchStub = makeFetchStub({
       "https://good.example/": { body: GOOD_HTML },

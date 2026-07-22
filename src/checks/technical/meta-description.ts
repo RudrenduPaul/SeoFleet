@@ -19,7 +19,7 @@ export const metaDescriptionCheck: Check = {
         ...base,
         status: "FAIL",
         message: "Homepage could not be fetched, so the meta description could not be checked.",
-        fix: "Confirm siteUrl in LLMScout.json is correct and reachable.",
+        fix: "Confirm siteUrl in llmscout.json is correct and reachable.",
       };
     }
 

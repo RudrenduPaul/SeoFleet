@@ -1,15 +1,15 @@
-# LLMScout-cli (Python)
+# llmscout-cli (Python)
 
 Zero-config SEO and GEO (generative engine optimization) checker: 21 checks
 against a live site, plus a multi-site fleet mode for agencies checking
 several client sites at once, in pure Python with no extra runtime
 toolchain -- no headless browser, no separate interpreter to provision.
 
-[![PyPI version](https://img.shields.io/pypi/v/LLMScout-cli.svg)](https://pypi.org/project/LLMScout-cli/)
+[![PyPI version](https://img.shields.io/pypi/v/llmscout-cli.svg)](https://pypi.org/project/llmscout-cli/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/RudrenduPaul/LLMScout/blob/main/LICENSE)
-[![Python versions](https://img.shields.io/pypi/pyversions/LLMScout-cli.svg)](https://pypi.org/project/LLMScout-cli/)
+[![Python versions](https://img.shields.io/pypi/pyversions/llmscout-cli.svg)](https://pypi.org/project/llmscout-cli/)
 [![CI](https://github.com/RudrenduPaul/LLMScout/actions/workflows/ci.yml/badge.svg)](https://github.com/RudrenduPaul/LLMScout/actions/workflows/ci.yml)
-[![npm version](https://img.shields.io/npm/v/LLMScout-cli.svg)](https://www.npmjs.com/package/LLMScout-cli)
+[![npm version](https://img.shields.io/npm/v/llmscout-cli.svg)](https://www.npmjs.com/package/llmscout-cli)
 
 ## Why this exists
 
@@ -32,17 +32,17 @@ Python standard library.
 ## Install
 
 ```bash
-pip install LLMScout-cli
+pip install llmscout-cli
 ```
 
 or with [uv](https://docs.astral.sh/uv/):
 
 ```bash
-uv add LLMScout-cli
+uv add llmscout-cli
 ```
 
 The complementary JS/TS distribution installs from npm:
-`npm install -g LLMScout-cli` -- see the
+`npm install -g llmscout-cli` -- see the
 [project README](https://github.com/RudrenduPaul/LLMScout#readme) for that
 package. Both packages read the same 21-check spec and are intended to
 report the same PASS/WARN/FAIL verdicts for the same site; neither is
@@ -51,23 +51,23 @@ deprecated in favor of the other.
 ## Quickstart
 
 ```bash
-LLMScout init ./my-site --site-url https://example.com
-LLMScout check ./my-site
+llmscout init ./my-site --site-url https://example.com
+llmscout check ./my-site
 ```
 
-`init` scaffolds a `LLMScout.json` config (and a Claude Code skill file) in
+`init` scaffolds a `llmscout.json` config (and a Claude Code skill file) in
 the target directory; `check` runs all 21 checks against the configured
 `siteUrl` and prints a PASS/WARN/FAIL line per check plus a summary. Pass
 `--json` before the subcommand for structured output an agent can parse:
 
 ```bash
-LLMScout --json check ./my-site
+llmscout --json check ./my-site
 ```
 
 Or call the library directly (the agent-native path, no subprocess):
 
 ```python
-from LLMScout import load_site, run_checks, ALL_CHECKS
+from llmscout import load_site, run_checks, ALL_CHECKS
 
 ctx = load_site("https://example.com")
 results = run_checks(ALL_CHECKS, ctx)
@@ -78,7 +78,7 @@ for r in results:
 ## How it works
 
 ```
-LLMScout.json -> site URL -> fetch homepage + robots.txt + sitemap.xml + llms.txt (parallel)
+llmscout.json -> site URL -> fetch homepage + robots.txt + sitemap.xml + llms.txt (parallel)
    -> 21 checks (12 technical + 9 GEO) run against the shared fetched context
    -> PASS / WARN / FAIL per check -> exit code (0 clean / 1 any FAIL / 2 usage error)
 ```
@@ -93,7 +93,7 @@ see those docs for what each check actually verifies.
 ## Fleet mode
 
 ```bash
-LLMScout fleet ./fleet.json
+llmscout fleet ./fleet.json
 ```
 
 Runs the full 21-check suite against every site declared in a local JSON
@@ -110,8 +110,8 @@ manifest's `name` field.
 - uses: actions/setup-python@v5
   with:
     python-version: '3.12'
-- run: pip install LLMScout-cli
-- run: LLMScout check ./my-site --json > results.json
+- run: pip install llmscout-cli
+- run: llmscout check ./my-site --json > results.json
 ```
 
 Full walkthrough in
@@ -119,7 +119,7 @@ Full walkthrough in
 
 ## Security
 
-LLMScout's fetch layer only ever dials `http(s)`, follows redirects
+llmscout's fetch layer only ever dials `http(s)`, follows redirects
 manually one hop at a time, refuses to follow a redirect whose `Location`
 targets a non-`http(s)` scheme, and bounds the redirect chain at 5 hops so
 a redirect loop can't hang the process -- see

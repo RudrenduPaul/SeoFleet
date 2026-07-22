@@ -16,7 +16,7 @@ export const canonicalCheck: Check = {
         ...base,
         status: "FAIL",
         message: "Homepage could not be fetched, so the canonical tag could not be checked.",
-        fix: "Confirm siteUrl in LLMScout.json is correct and reachable.",
+        fix: "Confirm siteUrl in llmscout.json is correct and reachable.",
       };
     }
 

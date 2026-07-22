@@ -19,7 +19,7 @@ function runCli(args: string[]): { stdout: string; stderr: string; status: numbe
 let dir: string;
 
 beforeEach(() => {
-  dir = mkdtempSync(path.join(tmpdir(), "LLMScout-cli-e2e-"));
+  dir = mkdtempSync(path.join(tmpdir(), "llmscout-cli-e2e-"));
 });
 
 afterEach(() => {
@@ -59,10 +59,10 @@ describe("CLI", () => {
     expect(() => JSON.parse(stdout)).not.toThrow();
   });
 
-  it("exits 2 on `check` against a directory with no LLMScout.json", () => {
+  it("exits 2 on `check` against a directory with no llmscout.json", () => {
     const { status, stderr } = runCli(["check", dir]);
     expect(status).toBe(2);
-    expect(stderr).toMatch(/Run `LLMScout init/);
+    expect(stderr).toMatch(/Run `llmscout init/);
   });
 
   it("exits 2 on `check` against a nonexistent path", () => {

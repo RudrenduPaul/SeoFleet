@@ -12,7 +12,7 @@ export interface InitResult {
   skillCreated: boolean;
 }
 
-const SKILL_RELATIVE_PATH = path.join(".claude", "skills", "LLMScout", "SKILL.md");
+const SKILL_RELATIVE_PATH = path.join(".claude", "skills", "llmscout", "SKILL.md");
 
 function buildSkillMarkdown(): string {
   // This file is what actually replaces claude-seo's broken /plugin
@@ -23,12 +23,12 @@ function buildSkillMarkdown(): string {
   return `# LLMScout
 
 Run SEO and GEO (generative engine optimization) checks against this
-project's configured site using the \`LLMScout\` CLI.
+project's configured site using the \`llmscout\` CLI.
 
 ## Usage
 
 \`\`\`
-LLMScout check . --json
+llmscout check . --json
 \`\`\`
 
 This reads ${CONFIG_FILENAME} in the project root for the site URL and
@@ -42,9 +42,9 @@ this is a single Node CLI invocation.
 
 /**
  * Scaffolds a working LLMScout setup into a target directory: a
- * LLMScout.json the `check`/`fleet` commands read, plus a minimal Claude
+ * llmscout.json the `check`/`fleet` commands read, plus a minimal Claude
  * Code skill file that points at this same CLI. Idempotent: an existing
- * LLMScout.json or SKILL.md is left untouched so re-running init never
+ * llmscout.json or SKILL.md is left untouched so re-running init never
  * clobbers a user's configured siteUrl.
  */
 export function initProject(targetPath: string, opts: { siteUrl?: string } = {}): InitResult {

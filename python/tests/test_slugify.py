@@ -1,7 +1,7 @@
 """Ported from test/slugify.test.ts."""
 from __future__ import annotations
 
-from LLMScout.slugify import slugify
+from llmscout.slugify import slugify
 
 
 def test_slugify_strips_scheme_and_collapses_url_into_one_slug():
