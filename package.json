@@ -1,7 +1,7 @@
 {
   "name": "LLMScout-cli",
-  "version": "0.2.1",
-  "description": "Zero-config, cross-platform SEO and GEO (generative engine optimization) checks for local projects and multi-site agency fleets, in pure TypeScript with no Python or headless-browser dependency.",
+  "version": "0.2.2",
+  "description": "DEPRECATED: this package has been renamed to llmscout-cli. Install with: npm install -g llmscout-cli. See https://github.com/RudrenduPaul/LLMScout",
   "keywords": [
     "seo",
     "geo",
