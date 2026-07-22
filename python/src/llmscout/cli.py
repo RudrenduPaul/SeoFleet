@@ -12,9 +12,8 @@ import argparse
 import sys
 from typing import List
 
+from . import __version__ as _VERSION
 from .cli_lib import run_check_command, run_fleet_command, run_init_command
-
-_VERSION = "0.2.0"
 
 
 def build_parser() -> argparse.ArgumentParser:
