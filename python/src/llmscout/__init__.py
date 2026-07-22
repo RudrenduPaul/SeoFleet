@@ -10,7 +10,7 @@ Programmatic / agent-native entry point.
 
 This is the Python port of the llmscout-cli npm package
 (https://www.npmjs.com/package/llmscout-cli). Both distributions run the
-same 12 technical-SEO/GEO checks; see
+same 21 technical-SEO/GEO checks; see
 https://github.com/RudrenduPaul/LLMScout for the canonical documentation,
 comparison table, and the original TypeScript source.
 """
@@ -48,7 +48,7 @@ from .runner import has_failure, run_checks
 from .site_resources import build_check_context, fetch_site_resources, load_site
 from .types import Check, CheckContext, CheckResult, SiteResources
 
-__version__ = "0.2.0"
+__version__ = "0.3.1"
 
 __all__ = [
     "__version__",

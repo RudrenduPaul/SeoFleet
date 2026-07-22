@@ -9,7 +9,7 @@ program
   .description(
     "Zero-config, cross-platform SEO and GEO checks for local projects, with no Python or headless-browser dependency.",
   )
-  .version("0.1.0")
+  .version("0.3.0")
   .option("--json", "output structured JSON instead of human-readable text", false)
   .option("--user-agent <string>", "override the default User-Agent header sent on outbound fetches");
 
