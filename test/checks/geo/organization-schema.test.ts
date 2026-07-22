@@ -45,6 +45,15 @@ describe("organizationSchemaCheck", () => {
     expect(result.status).toBe("PASS");
   });
 
+  it("PASSes when @type is an array of types, per the schema.org multi-type pattern", async () => {
+    const html =
+      '<html><head><script type="application/ld+json">' +
+      '{"@type":["Organization","LocalBusiness"],"name":"Acme Widgets","sameAs":["https://twitter.com/acme"]}' +
+      "</script></head></html>";
+    const result = await organizationSchemaCheck.run(makeCheckContext(html));
+    expect(result.status).toBe("PASS");
+  });
+
   it("PASSes for a Person schema with sameAs, found nested inside @graph", async () => {
     const html =
       '<html><head><script type="application/ld+json">' +
