@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "LLMScout-cli"
-version = "0.2.1"
-description = "Zero-config, cross-platform SEO and GEO (generative engine optimization) checker: 12 checks against a live site, plus multi-site fleet mode, in pure Python with no extra runtime toolchain."
+version = "0.2.2"
+description = "DEPRECATED: this package has been renamed to llmscout-cli. Install with: pip install llmscout-cli. See https://github.com/RudrenduPaul/LLMScout"
 readme = "README.md"
 requires-python = ">=3.9"
 license = "MIT"
@@ -15,7 +15,7 @@ authors = [
 ]
 keywords = ["seo", "geo", "generative-engine-optimization", "cli", "agent-native", "website-audit", "developer-tools"]
 classifiers = [
-  "Development Status :: 3 - Alpha",
+  "Development Status :: 7 - Inactive",
   "Environment :: Console",
   "Intended Audience :: Developers",
   "License :: OSI Approved :: MIT License",
