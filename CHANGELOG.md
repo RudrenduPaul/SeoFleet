@@ -9,12 +9,12 @@ run the same checks; entries note which distribution they apply to.
 
 ### Changed
 
-- Renamed project from LLMScout to LLMScout.
+- Renamed project from SeoFleet to LLMScout.
 - npm package: `LLMScout-cli` -> `llmscout-cli`.
 - PyPI package: `LLMScout-cli` -> `llmscout-cli`.
 - CLI binary: `LLMScout` -> `llmscout`.
 - Config file: `LLMScout.json` -> `llmscout.json`.
-- GitHub repo: `RudrenduPaul/LLMScout` -> `RudrenduPaul/LLMScout`.
+- GitHub repo: `RudrenduPaul/SeoFleet` -> `RudrenduPaul/LLMScout`.
 - The old `LLMScout-cli` packages received one final release each (npm
   and PyPI, `0.2.2`) carrying a deprecation notice before this rename;
   no further releases will be published under that name.
