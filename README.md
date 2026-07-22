@@ -32,7 +32,7 @@ Runs 21 technical-SEO and GEO (generative-engine-optimization) checks against yo
 
 LLMScout ships as two independent, complementary distributions. Both run the same 21 checks with the same PASS/WARN/FAIL verdicts, so pick whichever fits your toolchain.
 
-**Node/TypeScript (npm, published):**
+**Node/TypeScript (npm):**
 
 ```bash
 npm install -g llmscout-cli
@@ -349,7 +349,7 @@ LLMScout is not a fork of either project. It shares no code with them, has a dif
 
 Beyond the install-fix wedge, LLMScout's checks track the concrete, evidence-backed direction the GEO space has actually moved since mid-2025 -- see [Why GEO checks matter right now](#why-geo-checks-matter-right-now) for the cited sources behind that claim, including the training-versus-search AI crawler split, Markdown content negotiation, and Google's own documented FAQ-rich-result deprecation.
 
-LLMScout is at v0.2. Both distributions are published: `pip install llmscout-cli` (PyPI) and `npm install -g llmscout-cli` (npm) -- see [Install](#install) for both paths.
+LLMScout is at v0.3, freshly renamed from its original name, LLMScout. Both distributions are being republished under the new package name (`llmscout-cli` on both npm and PyPI) -- see [Install](#install) for both paths, and the badges above for live version status.
 
 ## FAQ
 
