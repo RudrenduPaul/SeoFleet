@@ -3,10 +3,10 @@
 ## The check pipeline
 
 Both the npm and PyPI packages run the same pipeline (TypeScript:
-`src/cli-lib.ts`; Python: `python/src/LLMScout/cli_lib.py`):
+`src/cli-lib.ts`; Python: `python/src/llmscout/cli_lib.py`):
 
 ```
-LLMScout.json (siteUrl + checks.technical/geo flags)
+llmscout.json (siteUrl + checks.technical/geo flags)
      |
      v
 fetch homepage + robots.txt + sitemap.xml + llms.txt, in parallel
@@ -19,7 +19,7 @@ html.parser-based tree on the Python side) into a shared CheckContext
      |
      v
 run the selected checks (12 technical + 9 GEO, or a subset per
-LLMScout.json's checks.technical/checks.geo flags) against that one
+llmscout.json's checks.technical/checks.geo flags) against that one
 shared context -- a check raising becomes a FAIL result citing the error,
 never a crash of the whole run
      |
@@ -31,7 +31,7 @@ A check result is always a plain structured value (`CheckResult` /
 `CheckResult` dataclass), never a thrown exception -- a caller embedding
 LLMScout as a library gets a consistent contract regardless of what went
 wrong (an unreachable homepage, a network timeout, a malformed
-`LLMScout.json`).
+`llmscout.json`).
 
 ## Verdict taxonomy
 
@@ -174,7 +174,7 @@ endpoint). Absence is WARN only -- informational.
 `fleet <manifest.json>` runs the full 21-check suite against every site
 declared in a local JSON manifest (`{"sites": [{"name", "path"}]}`) in one
 invocation. Each entry's `path` points at a directory with its own
-`LLMScout.json`; relative paths resolve against the manifest file's own
+`llmscout.json`; relative paths resolve against the manifest file's own
 directory (not the process's working directory), so the same manifest
 works no matter where it's invoked from. Pass `--out-dir <dir>` to also
 write one auto-named report file per site (named from the manifest's
@@ -186,7 +186,7 @@ fetch it directly.
 ## Fetch safety
 
 The one fetch wrapper both distributions build every request on (`src/
-fetch-utils.ts`; `python/src/LLMScout/fetch_utils.py`) is deliberately
+fetch-utils.ts`; `python/src/llmscout/fetch_utils.py`) is deliberately
 narrow:
 
 - Only ever dials `http(s)` -- a `file://`, `ftp://`, or any other scheme

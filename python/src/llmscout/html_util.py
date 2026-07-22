@@ -3,7 +3,7 @@ A minimal HTML tree builder used in place of the TypeScript CLI's `cheerio`
 dependency. The npm package parses HTML with cheerio; this Python port uses
 only the standard library `html.parser`, building a small DOM-like tree
 (`Element`) with just enough surface -- tag, attributes, children, and text
-extraction -- for the 12 checks in `LLMScout.checks` to query. It is not a
+extraction -- for the 12 checks in `llmscout.checks` to query. It is not a
 general-purpose HTML parser: it targets the same well-formed-enough real
 website HTML the original tool assumes.
 

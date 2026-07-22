@@ -96,7 +96,7 @@ export interface RunFleetOptions {
    * (already guaranteed distinct-per-entry by loadFleetManifest), not the
    * site's URL, since that's the identifier the fleet operator chose.
    * Sites that error before producing check results (e.g. a missing
-   * LLMScout.json) are not written -- there's nothing to report yet.
+   * llmscout.json) are not written -- there's nothing to report yet.
    */
   outDir?: string;
   /** Write JSON report files when true, human-readable text otherwise. */
@@ -106,7 +106,7 @@ export interface RunFleetOptions {
 /**
  * Runs the full check suite against every site in a fleet manifest, local
  * filesystem only -- each entry's `path` is read directly with `loadConfig`
- * and its checks are run against the URL that path's own LLMScout.json
+ * and its checks are run against the URL that path's own llmscout.json
  * declares. There is no SSH, no remote execution, and no network surface
  * beyond the individual checks' own URL fetches.
  */

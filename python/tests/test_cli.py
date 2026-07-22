@@ -8,9 +8,9 @@ import os
 import sys
 from unittest.mock import patch
 
-from LLMScout import fetch_utils
-from LLMScout.cli import run_cli
-from LLMScout.cli_lib import run_check_command, run_fleet_command, run_init_command
+from llmscout import fetch_utils
+from llmscout.cli import run_cli
+from llmscout.cli_lib import run_check_command, run_fleet_command, run_init_command
 
 from .conftest import GOOD_HTML, GOOD_ROBOTS_TXT, GOOD_SITEMAP_XML, make_fetch_stub
 
@@ -47,7 +47,7 @@ def test_run_check_command_no_config_is_usage_error(tmp_path):
 
 
 def test_run_check_command_exit_code_reflects_failure(tmp_path):
-    (tmp_path / "LLMScout.json").write_text(json.dumps({"siteUrl": "https://acme.example/"}))
+    (tmp_path / "llmscout.json").write_text(json.dumps({"siteUrl": "https://acme.example/"}))
     stub = make_fetch_stub({"https://acme.example/": {"body": GOOD_HTML, "status": 200}})
     output = run_check_command(str(tmp_path), json_output=False, fetch_fn=stub)
     # robots.txt/sitemap.xml/llms.txt are all unstubbed -> 404 -> robots-txt FAILs
@@ -55,7 +55,7 @@ def test_run_check_command_exit_code_reflects_failure(tmp_path):
 
 
 def test_run_check_command_json_output_is_valid_json(tmp_path):
-    (tmp_path / "LLMScout.json").write_text(json.dumps({"siteUrl": "https://acme.example/"}))
+    (tmp_path / "llmscout.json").write_text(json.dumps({"siteUrl": "https://acme.example/"}))
     stub = make_fetch_stub({"https://acme.example/": {"body": GOOD_HTML, "status": 200}})
     output = run_check_command(str(tmp_path), json_output=True, fetch_fn=stub)
     payload = json.loads(output.stdout)
@@ -63,7 +63,7 @@ def test_run_check_command_json_output_is_valid_json(tmp_path):
 
 
 def test_run_check_command_sends_user_agent_override_when_no_fetch_fn_stub(tmp_path, monkeypatch):
-    (tmp_path / "LLMScout.json").write_text(json.dumps({"siteUrl": "https://good.example/"}))
+    (tmp_path / "llmscout.json").write_text(json.dumps({"siteUrl": "https://good.example/"}))
     seen_user_agents = []
 
     def _fake_open(request, timeout=None):
@@ -78,7 +78,7 @@ def test_run_check_command_sends_user_agent_override_when_no_fetch_fn_stub(tmp_p
 
 
 def test_run_check_command_prefers_explicit_fetch_fn_over_user_agent_override(tmp_path):
-    (tmp_path / "LLMScout.json").write_text(json.dumps({"siteUrl": "https://acme.example/"}))
+    (tmp_path / "llmscout.json").write_text(json.dumps({"siteUrl": "https://acme.example/"}))
     stub = make_fetch_stub({"https://acme.example/": {"body": GOOD_HTML, "status": 200}})
     output = run_check_command(str(tmp_path), json_output=True, fetch_fn=stub, user_agent="MyCustomBot/1.0")
     assert json.loads(output.stdout)["summary"]["total"] == 21
@@ -92,7 +92,7 @@ def test_run_fleet_command_reports_site_errors(tmp_path):
 
 
 def test_run_check_command_writes_report_file_into_out_dir(tmp_path):
-    (tmp_path / "LLMScout.json").write_text(json.dumps({"siteUrl": "https://good.example/"}))
+    (tmp_path / "llmscout.json").write_text(json.dumps({"siteUrl": "https://good.example/"}))
     stub = make_fetch_stub({
         "https://good.example/": {"body": GOOD_HTML, "status": 200},
         "https://good.example/robots.txt": {"body": GOOD_ROBOTS_TXT, "status": 200},
@@ -110,7 +110,7 @@ def test_run_check_command_writes_report_file_into_out_dir(tmp_path):
 
 
 def test_run_check_command_writes_json_report_without_corrupting_stdout(tmp_path):
-    (tmp_path / "LLMScout.json").write_text(json.dumps({"siteUrl": "https://good.example/"}))
+    (tmp_path / "llmscout.json").write_text(json.dumps({"siteUrl": "https://good.example/"}))
     stub = make_fetch_stub({
         "https://good.example/": {"body": GOOD_HTML, "status": 200},
         "https://good.example/robots.txt": {"body": GOOD_ROBOTS_TXT, "status": 200},
@@ -127,7 +127,7 @@ def test_run_check_command_writes_json_report_without_corrupting_stdout(tmp_path
 def test_run_fleet_command_writes_per_site_report_and_notes_count_on_stderr(tmp_path):
     client_a = tmp_path / "client-a"
     client_a.mkdir()
-    (client_a / "LLMScout.json").write_text(json.dumps({"siteUrl": "https://good.example/"}))
+    (client_a / "llmscout.json").write_text(json.dumps({"siteUrl": "https://good.example/"}))
     manifest = tmp_path / "fleet.json"
     manifest.write_text(json.dumps({"sites": [{"name": "client-a", "path": "./client-a"}]}))
 
@@ -146,7 +146,7 @@ def test_run_fleet_command_writes_per_site_report_and_notes_count_on_stderr(tmp_
 
 def test_run_cli_check_help_lists_out_dir_option(capsys):
     try:
-        run_cli(["LLMScout", "check", "--help"])
+        run_cli(["llmscout", "check", "--help"])
     except SystemExit as exc:
         assert exc.code == 0
     captured = capsys.readouterr()
@@ -155,7 +155,7 @@ def test_run_cli_check_help_lists_out_dir_option(capsys):
 
 def test_run_cli_fleet_help_lists_out_dir_option(capsys):
     try:
-        run_cli(["LLMScout", "fleet", "--help"])
+        run_cli(["llmscout", "fleet", "--help"])
     except SystemExit as exc:
         assert exc.code == 0
     captured = capsys.readouterr()
@@ -163,14 +163,14 @@ def test_run_cli_fleet_help_lists_out_dir_option(capsys):
 
 
 def test_run_cli_no_command_prints_help_and_exits_zero(capsys):
-    exit_code = run_cli(["LLMScout"])
+    exit_code = run_cli(["llmscout"])
     assert exit_code == 0
     captured = capsys.readouterr()
-    assert "usage: LLMScout" in captured.out
+    assert "usage: llmscout" in captured.out
 
 
 def test_run_cli_help_lists_user_agent_option(capsys):
-    exit_code = run_cli(["LLMScout"])
+    exit_code = run_cli(["llmscout"])
     assert exit_code == 0
     captured = capsys.readouterr()
     assert "--user-agent" in captured.out
@@ -178,13 +178,13 @@ def test_run_cli_help_lists_user_agent_option(capsys):
 
 def test_run_cli_version_flag_exits_cleanly():
     try:
-        run_cli(["LLMScout", "--version"])
+        run_cli(["llmscout", "--version"])
     except SystemExit as exc:
         assert exc.code == 0
 
 
 def test_run_cli_init_writes_scaffold(tmp_path, capsys):
-    exit_code = run_cli(["LLMScout", "init", str(tmp_path), "--site-url", "https://example.com"])
+    exit_code = run_cli(["llmscout", "init", str(tmp_path), "--site-url", "https://example.com"])
     assert exit_code == 0
     captured = capsys.readouterr()
     assert "Created" in captured.out
@@ -199,7 +199,7 @@ def test_run_cli_reconfigures_stdout_and_stderr_to_utf8_on_win32(tmp_path):
     with patch.object(sys, "platform", "win32"), \
             patch.object(sys, "stdout") as mock_stdout, \
             patch.object(sys, "stderr") as mock_stderr:
-        run_cli(["LLMScout"])
+        run_cli(["llmscout"])
 
     mock_stdout.reconfigure.assert_called_once_with(encoding="utf-8")
     mock_stderr.reconfigure.assert_called_once_with(encoding="utf-8")
@@ -209,7 +209,7 @@ def test_run_cli_does_not_reconfigure_streams_on_non_windows(tmp_path):
     with patch.object(sys, "platform", "linux"), \
             patch.object(sys, "stdout") as mock_stdout, \
             patch.object(sys, "stderr") as mock_stderr:
-        run_cli(["LLMScout"])
+        run_cli(["llmscout"])
 
     mock_stdout.reconfigure.assert_not_called()
     mock_stderr.reconfigure.assert_not_called()
@@ -225,6 +225,6 @@ def test_run_cli_tolerates_streams_without_reconfigure_on_win32(tmp_path):
     with patch.object(sys, "platform", "win32"), \
             patch.object(sys, "stdout", _StreamNoReconfigure()), \
             patch.object(sys, "stderr", _StreamNoReconfigure()):
-        exit_code = run_cli(["LLMScout"])
+        exit_code = run_cli(["llmscout"])
 
     assert exit_code == 0

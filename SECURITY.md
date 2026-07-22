@@ -12,8 +12,8 @@ handled as a priority.
 
 | Package | Version | Supported |
 | --- | --- | --- |
-| `LLMScout-cli` (npm) | 0.1.x | Yes |
-| `LLMScout-cli` (PyPI) | 0.1.x | Yes |
+| `llmscout-cli` (npm) | 0.1.x | Yes |
+| `llmscout-cli` (PyPI) | 0.1.x | Yes |
 
 Both distributions are pre-1.0 and under active development. Security
 fixes land on the latest `0.1.x` release of each; there is no older
@@ -42,7 +42,7 @@ for this repository. Include:
 - A redirect chain that reaches a non-`http(s)` scheme (e.g. `file://`)
   without being refused. Both CLIs validate every hop, not just the
   initial URL: the TypeScript fetch wrapper (`src/fetch-utils.ts`) and its
-  Python port (`python/src/LLMScout/fetch_utils.py`) both reject a
+  Python port (`python/src/llmscout/fetch_utils.py`) both reject a
   redirect `Location` that isn't `http(s)`, and both bound the redirect
   chain at 5 hops.
 - A crafted response body that causes unbounded resource consumption

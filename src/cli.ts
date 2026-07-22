@@ -5,7 +5,7 @@ import { runInitCommand, runCheckCommand, runFleetCommand } from "./cli-lib.js";
 const program = new Command();
 
 program
-  .name("LLMScout")
+  .name("llmscout")
   .description(
     "Zero-config, cross-platform SEO and GEO checks for local projects, with no Python or headless-browser dependency.",
   )
@@ -15,7 +15,7 @@ program
 
 program
   .command("init")
-  .description("Scaffold a LLMScout setup (LLMScout.json + a Claude Code skill file) into a target directory")
+  .description("Scaffold a LLMScout setup (llmscout.json + a Claude Code skill file) into a target directory")
   .argument("<path>", "target project directory")
   .option("--site-url <url>", "set siteUrl in the scaffolded config immediately")
   .action((targetPath: string, opts: { siteUrl?: string }, command: Command) => {
@@ -32,7 +32,7 @@ program
 program
   .command("check")
   .description("Run SEO/GEO checks against a local project's configured site")
-  .argument("<path>", "local project directory containing LLMScout.json")
+  .argument("<path>", "local project directory containing llmscout.json")
   .option("--out-dir <dir>", "also write an auto-named report file for this site into this directory")
   .action(async (targetPath: string, opts: { outDir?: string }, command: Command) => {
     const globalOpts = command.optsWithGlobals<{ json: boolean; userAgent?: string }>();

@@ -46,7 +46,7 @@ export const organizationSchemaCheck: Check = {
         ...base,
         status: "FAIL",
         message: "Homepage could not be fetched, so Organization schema could not be checked.",
-        fix: "Confirm siteUrl in LLMScout.json is correct and reachable.",
+        fix: "Confirm siteUrl in llmscout.json is correct and reachable.",
       };
     }
 

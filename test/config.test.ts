@@ -9,7 +9,7 @@ import { ALL_CHECKS, GEO_CHECKS, TECHNICAL_CHECKS } from "../src/checks/index.js
 let dir: string;
 
 beforeEach(() => {
-  dir = mkdtempSync(path.join(tmpdir(), "LLMScout-config-"));
+  dir = mkdtempSync(path.join(tmpdir(), "llmscout-config-"));
 });
 
 afterEach(() => {
@@ -29,7 +29,7 @@ describe("configPath / defaultConfig", () => {
 describe("loadConfig", () => {
   it("throws a usage error when the config file is missing", () => {
     expect(() => loadConfig(dir)).toThrow(LLMScoutError);
-    expect(() => loadConfig(dir)).toThrow(/Run `LLMScout init/);
+    expect(() => loadConfig(dir)).toThrow(/Run `llmscout init/);
   });
 
   it("throws a usage error on malformed JSON", () => {

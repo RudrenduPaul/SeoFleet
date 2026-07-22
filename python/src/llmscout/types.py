@@ -76,7 +76,7 @@ class Check:
     """The one contract every concrete check implements. This is the seam
     between "a check" and "the runner" -- adding check #13 means writing one
     new module exposing a `Check` with this shape and registering it in
-    LLMScout/checks/__init__.py, nothing else changes."""
+    llmscout/checks/__init__.py, nothing else changes."""
 
     id: str
     name: str

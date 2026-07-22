@@ -9,9 +9,9 @@ from __future__ import annotations
 
 from typing import Callable, Dict, List, Optional
 
-from LLMScout.fetch_utils import FetchedResource
-from LLMScout.html_util import parse_html
-from LLMScout.types import CheckContext, FetchFn, SiteResources
+from llmscout.fetch_utils import FetchedResource
+from llmscout.html_util import parse_html
+from llmscout.types import CheckContext, FetchFn, SiteResources
 
 GOOD_HTML = """<!doctype html>
 <html>

@@ -1,19 +1,19 @@
 """Ported from test/checks/geo/*.test.ts."""
 from __future__ import annotations
 
-from LLMScout.checks.geo.ai_crawler_directives import (
+from llmscout.checks.geo.ai_crawler_directives import (
     ai_crawler_directives_check,
     parse_ai_crawler_directives,
 )
-from LLMScout.checks.geo.content_extraction import content_extraction_check
-from LLMScout.checks.geo.faq_schema import faq_schema_check
-from LLMScout.checks.geo.link_header import link_header_check, parse_link_header
-from LLMScout.checks.geo.llms_txt import llms_txt_check
-from LLMScout.checks.geo.markdown_negotiation import markdown_negotiation_check
-from LLMScout.checks.geo.organization_schema import organization_schema_check
-from LLMScout.checks.geo.speakable_schema import speakable_schema_check
-from LLMScout.checks.geo.structured_data import structured_data_check
-from LLMScout.fetch_utils import FetchedResource
+from llmscout.checks.geo.content_extraction import content_extraction_check
+from llmscout.checks.geo.faq_schema import faq_schema_check
+from llmscout.checks.geo.link_header import link_header_check, parse_link_header
+from llmscout.checks.geo.llms_txt import llms_txt_check
+from llmscout.checks.geo.markdown_negotiation import markdown_negotiation_check
+from llmscout.checks.geo.organization_schema import organization_schema_check
+from llmscout.checks.geo.speakable_schema import speakable_schema_check
+from llmscout.checks.geo.structured_data import structured_data_check
+from llmscout.fetch_utils import FetchedResource
 
 from .conftest import BAD_HTML, GOOD_HTML, GOOD_ROBOTS_TXT, make_check_context
 
