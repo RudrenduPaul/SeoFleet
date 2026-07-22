@@ -48,7 +48,7 @@ from .runner import has_failure, run_checks
 from .site_resources import build_check_context, fetch_site_resources, load_site
 from .types import Check, CheckContext, CheckResult, SiteResources
 
-__version__ = "0.3.2"
+__version__ = "0.3.3"
 
 __all__ = [
     "__version__",
