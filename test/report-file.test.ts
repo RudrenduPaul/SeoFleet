@@ -7,7 +7,7 @@ import { writeReportFile } from "../src/report-file.js";
 let dir: string;
 
 beforeEach(() => {
-  dir = mkdtempSync(path.join(tmpdir(), "LLMScout-report-file-"));
+  dir = mkdtempSync(path.join(tmpdir(), "llmscout-report-file-"));
 });
 
 afterEach(() => {

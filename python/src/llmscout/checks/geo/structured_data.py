@@ -16,7 +16,7 @@ def _run(ctx: CheckContext) -> CheckResult:
         return CheckResult(
             _ID, _NAME, _CATEGORY, "FAIL",
             "Homepage could not be fetched, so structured data could not be checked.",
-            "Confirm siteUrl in LLMScout.json is correct and reachable.",
+            "Confirm siteUrl in llmscout.json is correct and reachable.",
         )
 
     scripts = get_scripts_by_type(ctx.root, "application/ld+json")

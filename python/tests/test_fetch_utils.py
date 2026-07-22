@@ -7,9 +7,9 @@ import urllib.error
 
 import pytest
 
-from LLMScout import fetch_utils
-from LLMScout.errors import LLMScoutError
-from LLMScout.fetch_utils import DEFAULT_USER_AGENT, assert_http_url, safe_fetch, with_user_agent
+from llmscout import fetch_utils
+from llmscout.errors import LLMScoutError
+from llmscout.fetch_utils import DEFAULT_USER_AGENT, assert_http_url, safe_fetch, with_user_agent
 
 
 def test_assert_http_url_accepts_https():

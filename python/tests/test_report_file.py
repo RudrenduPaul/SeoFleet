@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import os
 
-from LLMScout.report_file import write_report_file
+from llmscout.report_file import write_report_file
 
 
 def test_write_report_file_writes_txt_named_from_slugified_stem(tmp_path):

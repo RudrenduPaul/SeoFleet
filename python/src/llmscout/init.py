@@ -9,7 +9,7 @@ from .config import CONFIG_FILENAME, config_path, default_config
 from .errors import LLMScoutError
 from .fetch_utils import assert_http_url
 
-_SKILL_RELATIVE_PATH = os.path.join(".claude", "skills", "LLMScout", "SKILL.md")
+_SKILL_RELATIVE_PATH = os.path.join(".claude", "skills", "llmscout", "SKILL.md")
 
 
 @dataclass
@@ -30,12 +30,12 @@ def _build_skill_markdown() -> str:
     return f"""# LLMScout
 
 Run SEO and GEO (generative engine optimization) checks against this
-project's configured site using the `LLMScout` CLI.
+project's configured site using the `llmscout` CLI.
 
 ## Usage
 
 ```
-LLMScout check . --json
+llmscout check . --json
 ```
 
 This reads {CONFIG_FILENAME} in the project root for the site URL and
@@ -50,9 +50,9 @@ a single CLI invocation.
 def init_project(target_path: str, site_url: str = "") -> InitResult:
     """
     Scaffolds a working LLMScout setup into a target directory: a
-    LLMScout.json the `check`/`fleet` commands read, plus a minimal Claude
+    llmscout.json the `check`/`fleet` commands read, plus a minimal Claude
     Code skill file that points at this same CLI. Idempotent: an existing
-    LLMScout.json or SKILL.md is left untouched so re-running init never
+    llmscout.json or SKILL.md is left untouched so re-running init never
     clobbers a user's configured siteUrl.
     """
     if site_url:

@@ -2,10 +2,10 @@
 """
 01 -- single site check.
 
-The simplest possible use of the LLMScout library: load_site() fetches the
+The simplest possible use of the llmscout library: load_site() fetches the
 homepage plus robots.txt/sitemap.xml/llms.txt, then run_checks() runs all
 12 checks against that shared context. This is the library equivalent of
-`LLMScout check <path>` (minus the LLMScout.json file -- here the site URL
+`llmscout check <path>` (minus the llmscout.json file -- here the site URL
 is passed directly).
 
 Checks a real live site over https -- example.com by default (IANA's
@@ -17,7 +17,7 @@ Run:
 """
 import sys
 
-from LLMScout import ALL_CHECKS, load_site, run_checks
+from llmscout import ALL_CHECKS, load_site, run_checks
 
 
 def main() -> None:

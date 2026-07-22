@@ -35,7 +35,7 @@ export const speakableSchemaCheck: Check = {
         ...base,
         status: "FAIL",
         message: "Homepage could not be fetched, so Speakable schema could not be checked.",
-        fix: "Confirm siteUrl in LLMScout.json is correct and reachable.",
+        fix: "Confirm siteUrl in llmscout.json is correct and reachable.",
       };
     }
 

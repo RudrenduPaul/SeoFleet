@@ -1,9 +1,23 @@
 # Changelog
 
 All notable changes to LLMScout are documented in this file. This
-changelog covers both distributions -- the npm package (`LLMScout-cli`,
-TypeScript) and the PyPI package (`LLMScout-cli`, Python) -- since they
+changelog covers both distributions -- the npm package (`llmscout-cli`,
+TypeScript) and the PyPI package (`llmscout-cli`, Python) -- since they
 run the same checks; entries note which distribution they apply to.
+
+## [0.3.0] - 2026-07-22
+
+### Changed
+
+- Renamed project from LLMScout to LLMScout.
+- npm package: `LLMScout-cli` -> `llmscout-cli`.
+- PyPI package: `LLMScout-cli` -> `llmscout-cli`.
+- CLI binary: `LLMScout` -> `llmscout`.
+- Config file: `LLMScout.json` -> `llmscout.json`.
+- GitHub repo: `RudrenduPaul/LLMScout` -> `RudrenduPaul/LLMScout`.
+- The old `LLMScout-cli` packages received one final release each (npm
+  and PyPI, `0.2.2`) carrying a deprecation notice before this rename;
+  no further releases will be published under that name.
 
 ## [0.2.0] - 2026-07-18
 
@@ -45,16 +59,16 @@ plus two CLI features, in both the npm and PyPI distributions.
 ## [Python 0.1.0] - 2026-07-16
 
 Initial public release of the Python port, published to PyPI as
-`LLMScout-cli` (`pip install LLMScout-cli`). Complementary to, not a
+`llmscout-cli` (`pip install llmscout-cli`). Complementary to, not a
 replacement for, the existing npm package -- both are first-class and
 maintained together. See `python/README.md` for Python-specific usage.
 
 ### Added
 
-- `LLMScout [init|check|fleet]` CLI (console script `LLMScout`, package
-  `LLMScout`) with the same commands and `--json` global flag as the npm
+- `llmscout [init|check|fleet]` CLI (console script `llmscout`, package
+  `llmscout`) with the same commands and `--json` global flag as the npm
   CLI's own `--help` output.
-- Programmatic library API: `from LLMScout import load_site, run_checks,
+- Programmatic library API: `from llmscout import load_site, run_checks,
   ALL_CHECKS, TECHNICAL_CHECKS, GEO_CHECKS`, returning the same
   `CheckResult` shape (`id`, `name`, `category`, `status`, `message`,
   optional `fix`) as the CLI's own JSON output.
@@ -65,17 +79,17 @@ maintained together. See `python/README.md` for Python-specific usage.
   crawler directives, FAQ schema, content extraction friendliness) -- the
   same thresholds, the same PASS/WARN/FAIL verdicts, and the same message/
   fix text as the TypeScript originals.
-- Fleet mode (`LLMScout fleet <manifest.json>`): runs the full 12-check
+- Fleet mode (`llmscout fleet <manifest.json>`): runs the full 12-check
   suite against every site declared in a local JSON manifest in one
   invocation, ported from `src/fleet.ts`.
 - **Zero runtime dependencies.** Unlike the npm package (which uses
   `cheerio` for HTML parsing and `commander` for argument parsing), the
   Python port uses only the standard library: a small `html.parser`-based
-  tree builder (`LLMScout.html_util`, no TypeScript equivalent needed --
+  tree builder (`llmscout.html_util`, no TypeScript equivalent needed --
   cheerio provided this directly on that side) in place of cheerio, and
   `argparse` in place of commander. There is no third-party HTTP library
   either -- the redirect-following, scheme-validating fetch wrapper
-  (`LLMScout.fetch_utils.safe_fetch`) is built on `urllib.request`.
+  (`llmscout.fetch_utils.safe_fetch`) is built on `urllib.request`.
 - Full pytest suite (106 tests) ported from the TypeScript vitest suite,
   covering all 12 checks (FAIL/WARN/PASS branches), the HTML tree builder,
   the fetch wrapper's URL/redirect validation, config loading, fleet

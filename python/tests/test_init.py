@@ -6,8 +6,8 @@ import os
 
 import pytest
 
-from LLMScout.errors import LLMScoutError
-from LLMScout.init import init_project
+from llmscout.errors import LLMScoutError
+from llmscout.init import init_project
 
 
 def test_init_project_creates_config_and_skill_file(tmp_path):
@@ -25,7 +25,7 @@ def test_init_project_creates_config_and_skill_file(tmp_path):
 
 def test_init_project_is_idempotent(tmp_path):
     init_project(str(tmp_path), "https://example.com")
-    with open(os.path.join(str(tmp_path), "LLMScout.json"), "w") as fh:
+    with open(os.path.join(str(tmp_path), "llmscout.json"), "w") as fh:
         fh.write(json.dumps({"siteUrl": "https://custom.example", "checks": {"technical": True, "geo": True}}))
 
     result = init_project(str(tmp_path))

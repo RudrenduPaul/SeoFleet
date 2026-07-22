@@ -1,9 +1,9 @@
 """
-Thin argument-parsing wrapper over LLMScout.cli_lib. Ported from src/cli.ts
+Thin argument-parsing wrapper over llmscout.cli_lib. Ported from src/cli.ts
 (which uses `commander`); this port uses the stdlib `argparse` to avoid a
 CLI-framework dependency. Flags, subcommands, and output are kept as close
 as practical to the npm CLI's own `--help` output. Console entry point:
-`LLMScout [options] <command>`, installed via the `LLMScout` console-script
+`llmscout [options] <command>`, installed via the `llmscout` console-script
 defined in python/pyproject.toml.
 """
 from __future__ import annotations
@@ -19,13 +19,13 @@ _VERSION = "0.2.0"
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="LLMScout",
+        prog="llmscout",
         description=(
             "Zero-config, cross-platform SEO and GEO checks for local projects, "
             "with no extra runtime toolchain."
         ),
     )
-    parser.add_argument("-V", "--version", action="version", version=f"LLMScout-cli {_VERSION}")
+    parser.add_argument("-V", "--version", action="version", version=f"llmscout-cli {_VERSION}")
     parser.add_argument(
         "--json", action="store_true", default=False,
         help="output structured JSON instead of human-readable text",
@@ -39,7 +39,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     init_parser = subparsers.add_parser(
         "init",
-        help="Scaffold a LLMScout setup (LLMScout.json + a Claude Code skill file) into a target directory",
+        help="Scaffold a LLMScout setup (llmscout.json + a Claude Code skill file) into a target directory",
     )
     init_parser.add_argument("path", help="target project directory")
     init_parser.add_argument(
@@ -50,7 +50,7 @@ def build_parser() -> argparse.ArgumentParser:
     check_parser = subparsers.add_parser(
         "check", help="Run SEO/GEO checks against a local project's configured site"
     )
-    check_parser.add_argument("path", help="local project directory containing LLMScout.json")
+    check_parser.add_argument("path", help="local project directory containing llmscout.json")
     check_parser.add_argument(
         "--out-dir", dest="out_dir", default=None,
         help="also write an auto-named report file for this site into this directory",

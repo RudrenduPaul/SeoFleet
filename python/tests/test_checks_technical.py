@@ -5,20 +5,20 @@ PASS branch, mirroring the TypeScript suite's own coverage shape.
 """
 from __future__ import annotations
 
-from LLMScout.checks.technical.canonical import canonical_check
-from LLMScout.checks.technical.heading_structure import heading_structure_check
-from LLMScout.checks.technical.image_alt import image_alt_check
-from LLMScout.checks.technical.image_weight import image_weight_check
-from LLMScout.checks.technical.meta_description import meta_description_check
-from LLMScout.checks.technical.open_graph import open_graph_check
-from LLMScout.checks.technical.robots_meta_directives import robots_meta_directives_check
-from LLMScout.checks.technical.robots_txt import robots_txt_check
-from LLMScout.checks.technical.sitemap_xml import sitemap_xml_check
-from LLMScout.checks.technical.title import title_check
-from LLMScout.checks.technical.twitter_card import twitter_card_check
-from LLMScout.checks.technical.redirect_chain import redirect_chain_check
-from LLMScout import fetch_utils
-from LLMScout.fetch_utils import FetchedResource, Hop, safe_fetch
+from llmscout.checks.technical.canonical import canonical_check
+from llmscout.checks.technical.heading_structure import heading_structure_check
+from llmscout.checks.technical.image_alt import image_alt_check
+from llmscout.checks.technical.image_weight import image_weight_check
+from llmscout.checks.technical.meta_description import meta_description_check
+from llmscout.checks.technical.open_graph import open_graph_check
+from llmscout.checks.technical.robots_meta_directives import robots_meta_directives_check
+from llmscout.checks.technical.robots_txt import robots_txt_check
+from llmscout.checks.technical.sitemap_xml import sitemap_xml_check
+from llmscout.checks.technical.title import title_check
+from llmscout.checks.technical.twitter_card import twitter_card_check
+from llmscout.checks.technical.redirect_chain import redirect_chain_check
+from llmscout import fetch_utils
+from llmscout.fetch_utils import FetchedResource, Hop, safe_fetch
 
 from .conftest import GOOD_HTML, make_check_context, make_fetch_stub
 from .test_fetch_utils import _http_error

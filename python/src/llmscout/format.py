@@ -85,7 +85,7 @@ def format_init_result_text(result: InitResult) -> str:
     lines.append(f"Created {result.skill_file}" if result.skill_created else f"{result.skill_file} already exists, left untouched")
     if result.config_created:
         lines.append("")
-        lines.append("Next: edit siteUrl in the config file above, then run `LLMScout check <path>`.")
+        lines.append("Next: edit siteUrl in the config file above, then run `llmscout check <path>`.")
     return "\n".join(lines)
 
 

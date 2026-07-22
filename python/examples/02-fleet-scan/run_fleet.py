@@ -3,8 +3,8 @@
 02 -- local multi-site fleet scan.
 
 Demonstrates fleet mode: several local project directories, each with its
-own LLMScout.json declaring a real site URL, checked in one pass via
-run_fleet(). This is the library equivalent of `LLMScout fleet
+own llmscout.json declaring a real site URL, checked in one pass via
+run_fleet(). This is the library equivalent of `llmscout fleet
 <manifest.json>` -- the use case is an agency or team maintaining several
 client sites as local repos and wanting one command to check them all.
 
@@ -21,8 +21,8 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from LLMScout import run_fleet
-from LLMScout.format import format_fleet_results_text
+from llmscout import run_fleet
+from llmscout.format import format_fleet_results_text
 
 SITES = {
     "example-com": "https://example.com",
@@ -31,13 +31,13 @@ SITES = {
 
 
 def main() -> None:
-    scratch = Path(tempfile.mkdtemp(prefix="LLMScout-fleet-example-"))
+    scratch = Path(tempfile.mkdtemp(prefix="llmscout-fleet-example-"))
     try:
         manifest_entries = []
         for name, site_url in SITES.items():
             project_dir = scratch / "clients" / name
             project_dir.mkdir(parents=True)
-            (project_dir / "LLMScout.json").write_text(
+            (project_dir / "llmscout.json").write_text(
                 json.dumps({"siteUrl": site_url, "checks": {"technical": True, "geo": True}}, indent=2)
             )
             manifest_entries.append({"name": name, "path": f"./clients/{name}"})

@@ -10,7 +10,7 @@ from .checks import ALL_CHECKS, GEO_CHECKS, TECHNICAL_CHECKS
 from .errors import LLMScoutError
 from .types import Check
 
-CONFIG_FILENAME = "LLMScout.json"
+CONFIG_FILENAME = "llmscout.json"
 
 
 @dataclass
@@ -36,7 +36,7 @@ def config_path(project_path: str) -> str:
 
 def load_config(project_path: str) -> LLMScoutConfig:
     """
-    Loads and validates a project's LLMScout.json. Every failure mode here
+    Loads and validates a project's llmscout.json. Every failure mode here
     (missing file, malformed JSON, missing/blank siteUrl) is a usage error
     (exit code 2), not a check failure -- the check suite never even
     starts.
@@ -45,7 +45,7 @@ def load_config(project_path: str) -> LLMScoutConfig:
 
     if not os.path.exists(file):
         raise LLMScoutError(
-            f'No {CONFIG_FILENAME} found in "{project_path}". Run `LLMScout init {project_path}` first.',
+            f'No {CONFIG_FILENAME} found in "{project_path}". Run `llmscout init {project_path}` first.',
             2,
         )
 

@@ -19,7 +19,7 @@ export const twitterCardCheck: Check = {
         ...base,
         status: "FAIL",
         message: "Homepage could not be fetched, so Twitter/X Card tags could not be checked.",
-        fix: "Confirm siteUrl in LLMScout.json is correct and reachable.",
+        fix: "Confirm siteUrl in llmscout.json is correct and reachable.",
       };
     }
 
