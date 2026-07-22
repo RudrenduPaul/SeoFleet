@@ -44,7 +44,7 @@ describe("CLI", () => {
   it("prints the version", () => {
     const { stdout, status } = runCli(["--version"]);
     expect(status).toBe(0);
-    expect(stdout.trim()).toBe("0.1.0");
+    expect(stdout.trim()).toBe("0.3.0");
   });
 
   it("scaffolds a real project directory via `init`", () => {
