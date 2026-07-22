@@ -1,6 +1,6 @@
 {
   "name": "llmscout-cli",
-  "version": "0.3.0",
+  "version": "0.3.4",
   "description": "Zero-dependency, cross-platform LLM/GEO/AEO checker CLI — 21 technical-SEO and generative-engine-optimization checks, no headless browser, no Python interpreter required.",
   "keywords": [
     "llm",
