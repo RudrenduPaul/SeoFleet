@@ -32,6 +32,9 @@
   },
   "license": "MIT",
   "author": "Rudrendu Paul",
+  "contributors": [
+    "Sourav Nandy"
+  ],
   "type": "module",
   "bin": {
     "llmscout": "dist/cli.js"
