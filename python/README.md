@@ -1,4 +1,14 @@
-# LLMScout-cli (Python)
+# LLMScout-cli (Python) — DEPRECATED
+
+**This package has been renamed to `llmscout-cli`.** Install with:
+
+```bash
+pip install llmscout-cli
+```
+
+See [github.com/RudrenduPaul/LLMScout](https://github.com/RudrenduPaul/LLMScout) for the current project. No further releases will be published under the `LLMScout-cli` name.
+
+---
 
 Zero-config SEO and GEO (generative engine optimization) checker: 21 checks
 against a live site, plus a multi-site fleet mode for agencies checking
